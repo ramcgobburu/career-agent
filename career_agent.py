@@ -14,8 +14,22 @@ from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_community.document_loaders import TextLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
-from langchain.chains import create_retrieval_chain
-from langchain.chains.combine_documents import create_stuff_documents_chain
+# Import chain functions - handle version differences
+try:
+    from langchain.chains.retrieval import create_retrieval_chain
+except ImportError:
+    try:
+        from langchain.chains import create_retrieval_chain
+    except ImportError:
+        from langchain_core.runnables import RunnablePassthrough
+        # Fallback implementation if needed
+        def create_retrieval_chain(retriever, combine_documents_chain):
+            return {"input": retriever} | combine_documents_chain
+
+try:
+    from langchain.chains.combine_documents import create_stuff_documents_chain
+except ImportError:
+    from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.documents import Document
 
