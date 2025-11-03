@@ -18,13 +18,13 @@ from langchain_community.vectorstores import Chroma
 try:
     from langchain.chains.retrieval import create_retrieval_chain
 except ImportError:
-    try:
+    # For older/newer versions, try alternate import path
+    from langchain import chains
+    if hasattr(chains, 'retrieval'):
+        from langchain.chains.retrieval import create_retrieval_chain
+    else:
+        # This should work in LangChain 0.3.x
         from langchain.chains import create_retrieval_chain
-    except ImportError:
-        from langchain_core.runnables import RunnablePassthrough
-        # Fallback implementation if needed
-        def create_retrieval_chain(retriever, combine_documents_chain):
-            return {"input": retriever} | combine_documents_chain
 
 try:
     from langchain.chains.combine_documents import create_stuff_documents_chain
