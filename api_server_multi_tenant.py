@@ -10,6 +10,7 @@ from typing import Optional, List, Dict, Any
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Depends, Header, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
@@ -303,6 +304,12 @@ async def health_check():
         "database": "connected",
         "agent_cache_size": len(agent_cache)
     }
+
+
+@app.get("/privacy-policy")
+async def privacy_policy():
+    """Serve privacy policy page for OpenAI Actions requirement."""
+    return FileResponse("privacy_policy.html", media_type="text/html")
 
 
 # Career Generation Endpoints (require authentication)
