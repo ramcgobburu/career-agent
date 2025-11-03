@@ -30,7 +30,13 @@ init_db()
 app = FastAPI(
     title="Career Agent API - Multi-Tenant",
     description="AI-powered career materials generator API with user provisioning",
-    version="2.0.0"
+    version="2.0.0",
+    servers=[
+        {
+            "url": os.getenv("API_BASE_URL", "https://career-agent-tf85.onrender.com"),
+            "description": "Production server"
+        }
+    ]
 )
 
 # Enable CORS for frontend access
