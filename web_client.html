@@ -940,7 +940,15 @@
     </div>
     
     <script>
-        const API_BASE_URL = 'http://localhost:8000';
+        const DEFAULT_API_BASE_URL = 'http://localhost:8000';
+        const isLocalhost = typeof window !== 'undefined' && (
+            window.location.hostname === 'localhost' ||
+            window.location.hostname === '127.0.0.1'
+        );
+        const isFileProtocol = typeof window !== 'undefined' && window.location.protocol === 'file:';
+        const API_BASE_URL = (!isLocalhost && !isFileProtocol && window.location.origin)
+            ? window.location.origin
+            : DEFAULT_API_BASE_URL;
         let currentUser = null;
         let apiKey = localStorage.getItem('career_agent_api_key');
         
@@ -960,7 +968,7 @@
                     showStatus('✅ Connected to Career-Agent API', 'success');
                 }
             } catch (error) {
-                showStatus('⚠️ Cannot connect to API server. Make sure it is running on port 8000.', 'error');
+                showStatus('⚠️ Cannot connect to API server. Please verify the server is running.', 'error');
             }
         }
         

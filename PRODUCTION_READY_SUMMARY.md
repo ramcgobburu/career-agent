@@ -57,7 +57,7 @@ No additional variables needed - works out of the box!
 ```bash
 # Required
 ENVIRONMENT=production
-CORS_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
+CORS_ORIGINS=https://careerpilotconsulting.com,https://www.careerpilotconsulting.com
 
 # Optional (for payment processing)
 STRIPE_SECRET_KEY=sk_live_...          # Stripe secret key
@@ -92,7 +92,7 @@ pip install -r requirements.txt
 **For Production**:
 ```bash
 export ENVIRONMENT=production
-export CORS_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
+export CORS_ORIGINS=https://careerpilotconsulting.com,https://www.careerpilotconsulting.com
 export STRIPE_SECRET_KEY=sk_live_...
 export STRIPE_WEBHOOK_SECRET=whsec_...
 ```
@@ -100,10 +100,12 @@ export STRIPE_WEBHOOK_SECRET=whsec_...
 Or create a `.env` file:
 ```bash
 ENVIRONMENT=production
-CORS_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
+CORS_ORIGINS=https://careerpilotconsulting.com,https://www.careerpilotconsulting.com
 STRIPE_SECRET_KEY=sk_live_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 ```
+
+▶️ Use `env.production.example` as a template and replace with your real values.
 
 ## 🚀 Running in Production
 

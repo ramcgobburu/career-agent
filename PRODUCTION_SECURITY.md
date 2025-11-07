@@ -94,8 +94,8 @@ async def generate_cover_letter(...):
 ```python
 # In production, replace "*" with specific domains
 allowed_origins = [
-    "https://yourdomain.com",
-    "https://www.yourdomain.com"
+    "https://careerpilotconsulting.com",
+    "https://www.careerpilotconsulting.com"
 ]
 ```
 

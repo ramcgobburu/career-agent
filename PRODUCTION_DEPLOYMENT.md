@@ -27,16 +27,16 @@ The current `api_server.py` is **NOT safe for payment processing**. Use `api_ser
    - [ ] Remove `/docs` endpoint in production
 
 4. **Environment Variables**
-   ```bash
-   ENVIRONMENT=production
-   DATABASE_URL=postgresql://user:pass@host:5432/dbname
-   CORS_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
-   ALLOWED_HOSTS=yourdomain.com,*.yourdomain.com
-   STRIPE_SECRET_KEY=sk_live_...
-   STRIPE_WEBHOOK_SECRET=whsec_...
-   OPENAI_API_KEY=sk-...
-   SENTRY_DSN=https://... (optional but recommended)
-   ```
+```bash
+ENVIRONMENT=production
+DATABASE_URL=postgresql://user:pass@host:5432/dbname
+CORS_ORIGINS=https://careerpilotconsulting.com,https://www.careerpilotconsulting.com
+ALLOWED_HOSTS=careerpilotconsulting.com,*.careerpilotconsulting.com
+STRIPE_SECRET_KEY=sk_live_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+OPENAI_API_KEY=sk-...
+SENTRY_DSN=https://... (optional but recommended)
+```
 
 5. **Monitoring**
    - [ ] Set up error tracking (Sentry)
@@ -51,7 +51,7 @@ The current `api_server.py` is **NOT safe for payment processing**. Use `api_ser
 1. Create Stripe account: https://stripe.com
 2. Get API keys from Dashboard → Developers → API keys
 3. Set up webhook endpoint in Dashboard → Developers → Webhooks
-4. Add endpoint: `https://yourdomain.com/api/v1/webhooks/stripe`
+4. Add endpoint: `https://careerpilotconsulting.com/api/v1/webhooks/stripe`
 5. Subscribe to events:
    - `checkout.session.completed`
    - `customer.subscription.deleted`
@@ -110,7 +110,7 @@ DATABASE_URL = "sqlite:///./db.db"
 
 ```python
 # ✅ GOOD: Specific domains
-CORS_ORIGINS = ["https://yourdomain.com"]
+CORS_ORIGINS = ["https://careerpilotconsulting.com"]
 
 # ❌ BAD: Allow all origins
 CORS_ORIGINS = ["*"]
@@ -160,11 +160,13 @@ Create `.env.production`:
 ```bash
 ENVIRONMENT=production
 DATABASE_URL=postgresql://...
-CORS_ORIGINS=https://yourdomain.com
+CORS_ORIGINS=https://careerpilotconsulting.com
 STRIPE_SECRET_KEY=sk_live_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 OPENAI_API_KEY=sk-...
 ```
+
+Use the provided `env.production.example` file as a starting point and replace the placeholder values with your real secrets.
 
 ## 🧪 Testing Payment Flow
 
