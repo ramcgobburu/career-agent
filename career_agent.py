@@ -420,12 +420,65 @@ Provide:
             "sources": result.get("context", [])
         }
     
+    def generate_job_application_answer(
+        self,
+        question: str,
+        company_name: Optional[str] = None,
+        job_description: Optional[str] = None,
+        role_title: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Generate an answer to a job application question.
+        Similar to Eztrackr's Job Application Answer Generator.
+        
+        Args:
+            question: The application question (e.g., "Why do you want to work for us?")
+            company_name: Company name
+            job_description: Full job description
+            role_title: Job title/role
+        
+        Returns:
+            Dictionary with 'content' and 'sources'
+        """
+        context_parts = []
+        
+        if company_name:
+            context_parts.append(f"Company: {company_name}")
+        if role_title:
+            context_parts.append(f"Role: {role_title}")
+        if job_description:
+            context_parts.append(f"Job Description: {job_description}")
+        
+        context_text = "\n".join(context_parts) if context_parts else ""
+        
+        query = f"""Answer this job application question using {self.user_name}'s career context:
+
+Application Question: {question}
+{context_text}
+
+Provide:
+- A concise, tailored answer (typically 100-200 words)
+- Specific reasons why {self.user_name} is interested in this role/company
+- Relevant skills and experiences that match the job requirements
+- Authentic and enthusiastic tone
+- Connection between {self.user_name}'s background and the company/role
+- Professional yet personal voice
+
+Make it compelling and specific to this opportunity."""
+        
+        result = self.qa_chain.invoke({"input": query})
+        
+        return {
+            "content": result["answer"],
+            "sources": result.get("context", [])
+        }
+    
     def query(self, question: str) -> Dict[str, Any]:
         """
         Generic query method for any career-related question.
         
         Args:
-            question: Your question about Ram's career, skills, or experiences
+            question: Your question about career, skills, or experiences
         
         Returns:
             Dictionary with 'content' and 'sources'

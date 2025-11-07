@@ -5,9 +5,9 @@ import os
 import secrets
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Tuple
 
-from sqlalchemy import create_engine, Column, String, Text, DateTime, ForeignKey, Boolean
+from sqlalchemy import create_engine, Column, String, Text, DateTime, ForeignKey, Boolean, Integer
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session, relationship
 from sqlalchemy.sql import func
@@ -33,11 +33,18 @@ class User(Base):
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
     is_active = Column(Boolean, default=True)
     
+    # Subscription & Usage fields
+    subscription_tier = Column(String, default="free", nullable=False)  # free, premium
+    requests_used = Column(Integer, default=0, nullable=False)  # Total requests used
+    subscription_expires_at = Column(DateTime, nullable=True)  # When subscription expires
+    subscription_status = Column(String, default="active", nullable=False)  # active, expired, cancelled
+    
     # Relationships
     contexts = relationship("UserContext", back_populates="user", cascade="all, delete-orphan")
+    usage_records = relationship("UsageRecord", back_populates="user", cascade="all, delete-orphan")
     
     def __repr__(self):
-        return f"<User(id={self.id}, email={self.email})>"
+        return f"<User(id={self.id}, email={self.email}, tier={self.subscription_tier})>"
 
 
 class UserContext(Base):
@@ -58,6 +65,22 @@ class UserContext(Base):
     
     def __repr__(self):
         return f"<UserContext(id={self.id}, user_id={self.user_id}, uploaded_at={self.uploaded_at})>"
+
+
+class UsageRecord(Base):
+    """Track individual API usage requests"""
+    __tablename__ = "usage_records"
+    
+    id = Column(String, primary_key=True, index=True)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
+    endpoint = Column(String, nullable=False)  # e.g., "cover-letter", "blurb", "query"
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    
+    # Relationships
+    user = relationship("User", back_populates="usage_records")
+    
+    def __repr__(self):
+        return f"<UsageRecord(id={self.id}, user_id={self.user_id}, endpoint={self.endpoint}, created_at={self.created_at})>"
 
 
 def generate_api_key() -> str:
@@ -108,9 +131,78 @@ def create_user(db: Session, email: Optional[str] = None, name: Optional[str] = 
         api_key=api_key,
         email=email,
         name=name,
-        is_active=True
+        is_active=True,
+        subscription_tier="free",
+        requests_used=0,
+        subscription_status="active"
     )
     db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+def get_usage_limit_for_tier(tier: str) -> int:
+    """Get the usage limit for a subscription tier"""
+    limits = {
+        "free": 2,  # First 2 services free
+        "premium": 999999  # Unlimited for premium
+    }
+    return limits.get(tier, 2)
+
+
+def can_user_make_request(user: User) -> Tuple[bool, str]:
+    """Check if user can make a request. Returns (can_make, reason)"""
+    # Check if subscription is active
+    if user.subscription_status != "active":
+        return False, "Subscription is not active. Please subscribe to continue."
+    
+    # Check if subscription expired
+    if user.subscription_expires_at and user.subscription_expires_at < datetime.now():
+        return False, "Subscription has expired. Please renew your subscription."
+    
+    # Check usage limit
+    limit = get_usage_limit_for_tier(user.subscription_tier)
+    if user.requests_used >= limit:
+        if user.subscription_tier == "free":
+            return False, f"You've used all {limit} free requests. Please subscribe to continue."
+        else:
+            return False, "Usage limit reached. Please contact support."
+    
+    return True, ""
+
+
+def record_usage(db: Session, user_id: str, endpoint: str) -> UsageRecord:
+    """Record a usage event for a user"""
+    usage_id = f"usage_{secrets.token_urlsafe(16)}"
+    usage_record = UsageRecord(
+        id=usage_id,
+        user_id=user_id,
+        endpoint=endpoint
+    )
+    db.add(usage_record)
+    
+    # Update user's request count
+    user = db.query(User).filter(User.id == user_id).first()
+    if user:
+        user.requests_used += 1
+    
+    db.commit()
+    db.refresh(usage_record)
+    return usage_record
+
+
+def update_subscription(db: Session, user_id: str, tier: str, expires_at: Optional[datetime] = None) -> User:
+    """Update user's subscription tier"""
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise ValueError(f"User {user_id} not found")
+    
+    user.subscription_tier = tier
+    user.subscription_status = "active"
+    if expires_at:
+        user.subscription_expires_at = expires_at
+    
     db.commit()
     db.refresh(user)
     return user

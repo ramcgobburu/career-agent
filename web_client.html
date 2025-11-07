@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Career Agent - Web Client</title>
+    <title>Career-Agent - AI-Powered Career Materials Generator | Octan Labs</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -12,67 +15,238 @@
         }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
             min-height: 100vh;
             padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(14, 165, 233, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 40% 20%, rgba(139, 92, 246, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
         }
         
         .container {
-            max-width: 900px;
+            max-width: 1200px;
             margin: 0 auto;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.3),
+                0 0 0 1px rgba(255, 255, 255, 0.1);
             overflow: hidden;
+            position: relative;
+            z-index: 1;
         }
         
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 50%, #8b5cf6 100%);
             color: white;
-            padding: 30px;
+            padding: 40px 30px;
             text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: pulse 15s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.5; }
+            50% { transform: scale(1.1) rotate(180deg); opacity: 0.8; }
         }
         
         .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
+            font-size: 2.8em;
+            margin-bottom: 8px;
+            position: relative;
+            z-index: 1;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         
         .header p {
+            opacity: 0.95;
+            font-size: 1.1em;
+            position: relative;
+            z-index: 1;
+            font-weight: 400;
+        }
+        
+        .header-branding {
+            position: relative;
+            display: block;
+            width: 100%;
+            margin-bottom: 10px;
+            z-index: 1;
+        }
+        
+        .header-company {
+            font-size: 0.85em;
             opacity: 0.9;
+            margin-top: 8px;
+            text-align: center;
+            font-style: italic;
+            line-height: 1.3;
+            font-weight: 300;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .user-info {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            text-align: right;
+            font-size: 14px;
+            z-index: 2;
+        }
+        
+        .user-info button {
+            background: rgba(255,255,255,0.25);
+            backdrop-filter: blur(10px);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.4);
+            padding: 10px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            margin-left: 10px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .user-info button:hover {
+            background: rgba(255,255,255,0.35);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+        
+        .usage-display {
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            padding: 12px 18px;
+            border-radius: 12px;
+            margin-top: 10px;
+            display: none;
+            border: 1px solid rgba(255,255,255,0.3);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .usage-display.active {
+            display: block;
+        }
+        
+        .usage-display .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: rgba(255,255,255,0.25);
+            border-radius: 10px;
+            margin-top: 10px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .usage-display .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
         }
         
         .content {
-            padding: 30px;
+            padding: 40px;
+            background: #fafbfc;
+        }
+        
+        .auth-section {
+            text-align: center;
+            padding: 50px 20px;
+            display: none;
+        }
+        
+        .auth-section.active {
+            display: block;
+            animation: fadeIn 0.4s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .auth-section h2 {
+            color: #1e293b;
+            font-size: 2em;
+            margin-bottom: 16px;
+            font-weight: 700;
+        }
+        
+        .main-content {
+            display: none;
+        }
+        
+        .main-content.active {
+            display: block;
+            animation: fadeIn 0.4s ease-out;
         }
         
         .tab-buttons {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             margin-bottom: 30px;
-            border-bottom: 2px solid #eee;
+            background: white;
+            padding: 8px;
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            flex-wrap: wrap;
         }
         
         .tab-button {
-            padding: 12px 24px;
-            background: none;
+            padding: 14px 24px;
+            background: transparent;
             border: none;
             cursor: pointer;
-            font-size: 16px;
-            color: #666;
-            border-bottom: 3px solid transparent;
-            transition: all 0.3s;
+            font-size: 15px;
+            color: #64748b;
+            border-radius: 12px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 500;
+            position: relative;
         }
         
         .tab-button.active {
-            color: #667eea;
-            border-bottom-color: #667eea;
+            color: #0ea5e9;
+            background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%);
             font-weight: 600;
+            box-shadow: 0 2px 8px rgba(14, 165, 233, 0.2);
         }
         
-        .tab-button:hover {
-            color: #667eea;
+        .tab-button:hover:not(.active) {
+            color: #0ea5e9;
+            background: #f1f5f9;
         }
         
         .tab-content {
@@ -89,23 +263,33 @@
         
         label {
             display: block;
-            margin-bottom: 8px;
-            color: #333;
-            font-weight: 500;
+            margin-bottom: 10px;
+            color: #1e293b;
+            font-weight: 600;
+            font-size: 14px;
+            letter-spacing: 0.01em;
         }
         
         input, textarea, select {
             width: 100%;
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 6px;
-            font-size: 14px;
-            transition: border-color 0.3s;
+            padding: 14px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 15px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: white;
+            color: #1e293b;
         }
         
         input:focus, textarea:focus, select:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #0ea5e9;
+            box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.1);
+            transform: translateY(-1px);
+        }
+        
+        input:hover, textarea:hover, select:hover {
+            border-color: #cbd5e1;
         }
         
         textarea {
@@ -130,42 +314,99 @@
         }
         
         .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%);
             color: white;
             flex: 1;
+            box-shadow: 0 4px 14px rgba(14, 165, 233, 0.3);
+            font-weight: 600;
+            letter-spacing: 0.01em;
         }
         
-        .btn-primary:hover {
+        .btn-primary:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 8px 24px rgba(14, 165, 233, 0.4);
+            background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
+        }
+        
+        .btn-primary:active:not(:disabled) {
+            transform: translateY(0);
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
         }
         
         .btn-secondary {
-            background: #f0f0f0;
-            color: #333;
+            background: white;
+            color: #475569;
+            border: 2px solid #e2e8f0;
+            font-weight: 500;
         }
         
         .btn-secondary:hover {
-            background: #e0e0e0;
+            background: #f8fafc;
+            border-color: #cbd5e1;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        
+        .btn-premium {
+            background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+            color: white;
+            box-shadow: 0 4px 14px rgba(245, 158, 11, 0.3);
+            font-weight: 600;
+        }
+        
+        .btn-premium:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(245, 158, 11, 0.4);
+            background: linear-gradient(135deg, #d97706 0%, #ea580c 100%);
         }
         
         .result-area {
             margin-top: 30px;
-            padding: 20px;
-            background: #f9f9f9;
-            border-radius: 6px;
-            border: 2px solid #eee;
+            padding: 28px;
+            background: white;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
             display: none;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.05);
         }
         
         .result-area.active {
             display: block;
+            animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .result-area h3 {
+            color: #1e293b;
+            margin-bottom: 16px;
+            font-size: 1.3em;
+            font-weight: 600;
         }
         
         .result-content {
             white-space: pre-wrap;
-            line-height: 1.6;
-            color: #333;
+            line-height: 1.8;
+            color: #334155;
+            font-size: 15px;
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
         }
         
         .loading {
@@ -180,13 +421,14 @@
         }
         
         .spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
+            border: 3px solid rgba(14, 165, 233, 0.1);
+            border-top: 3px solid #0ea5e9;
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 10px;
+            width: 48px;
+            height: 48px;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 16px;
+            box-shadow: 0 4px 12px rgba(14, 165, 233, 0.2);
         }
         
         @keyframes spin {
@@ -194,162 +436,791 @@
             100% { transform: rotate(360deg); }
         }
         
+        .loading p {
+            color: #64748b;
+            font-size: 15px;
+            font-weight: 500;
+        }
+        
         .status {
-            padding: 10px;
-            border-radius: 6px;
-            margin-bottom: 20px;
+            padding: 16px 20px;
+            border-radius: 12px;
+            margin-bottom: 24px;
             display: none;
+            font-weight: 500;
+            font-size: 14px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            animation: slideDown 0.3s ease-out;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
         
         .status.success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            color: #065f46;
+            border: 1px solid #6ee7b7;
             display: block;
         }
         
         .status.error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            color: #991b1b;
+            border: 1px solid #fca5a5;
             display: block;
+        }
+        
+        .status.warning {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            color: #92400e;
+            border: 1px solid #fcd34d;
+            display: block;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 32px;
+            border-radius: 20px;
+            max-width: 520px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: modalSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+        
+        .modal-header {
+            font-size: 1.6em;
+            margin-bottom: 24px;
+            color: #1e293b;
+            font-weight: 700;
+        }
+        
+        .subscription-card {
+            border: 2px solid #0ea5e9;
+            border-radius: 16px;
+            padding: 24px;
+            margin: 20px 0;
+            background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%);
+            box-shadow: 0 4px 16px rgba(14, 165, 233, 0.1);
+        }
+        
+        .subscription-card.premium {
+            border-color: #f59e0b;
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            box-shadow: 0 4px 16px rgba(245, 158, 11, 0.1);
+        }
+        
+        .subscription-card h3 {
+            color: #0ea5e9;
+            margin-bottom: 12px;
+            font-size: 1.3em;
+            font-weight: 700;
+        }
+        
+        .subscription-card.premium h3 {
+            color: #d97706;
+        }
+        
+        .api-key-display {
+            background: #f8fafc;
+            padding: 14px 16px;
+            border-radius: 12px;
+            font-family: 'SF Mono', 'Monaco', 'Cascadia Code', monospace;
+            word-break: break-all;
+            margin: 12px 0;
+            border: 2px solid #e2e8f0;
+            font-size: 13px;
+            color: #475569;
+        }
+        
+        .context-upload {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            padding: 28px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            border: 2px dashed #cbd5e1;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+            transition: all 0.3s ease;
+        }
+        
+        .context-upload:hover {
+            border-color: #0ea5e9;
+            box-shadow: 0 4px 16px rgba(14, 165, 233, 0.1);
+        }
+        
+        .context-upload h3 {
+            color: #1e293b;
+            margin-bottom: 12px;
+            font-size: 1.2em;
+            font-weight: 600;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 24px;
+            color: #64748b;
+            font-size: 14px;
+            border-top: 1px solid #e2e8f0;
+            margin-top: 40px;
+            background: #fafbfc;
+        }
+        
+        .footer a {
+            color: #0ea5e9;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        
+        .footer a:hover {
+            color: #0284c7;
+            text-decoration: underline;
+        }
+        
+        .footer strong {
+            color: #1e293b;
+            font-weight: 600;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                border-radius: 16px;
+            }
+            
+            .header {
+                padding: 30px 20px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .user-info {
+                position: static;
+                text-align: center;
+                margin-top: 20px;
+            }
+            
+            .user-info button {
+                margin: 5px;
+                display: inline-block;
+            }
+            
+            .content {
+                padding: 24px;
+            }
+            
+            .tab-buttons {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            .tab-button {
+                padding: 12px 18px;
+                font-size: 14px;
+                white-space: nowrap;
+            }
+            
+            .modal-content {
+                padding: 24px;
+                width: 95%;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .header p {
+                font-size: 0.95em;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+            
+            .button-group button {
+                width: 100%;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🤖 Career Agent</h1>
+            <div class="header-branding">
+                <h1>🤖 Career-Agent</h1>
+                <div class="header-company">by Octan Labs</div>
+            </div>
             <p>AI-Powered Career Materials Generator</p>
+            
+            <div class="user-info">
+                <div id="userInfoDisplay" style="display: none;">
+                    <div id="userName"></div>
+                    <div class="usage-display" id="usageDisplay">
+                        <div>Requests: <span id="usageCount">0</span> / <span id="usageLimit">2</span></div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <button onclick="showAccountModal()">Account</button>
+                    <button onclick="logout()">Logout</button>
+                </div>
+                <button id="loginButton" onclick="showAuthModal()">Login / Register</button>
+            </div>
         </div>
         
         <div class="content">
             <div id="status" class="status"></div>
             
-            <div class="tab-buttons">
-                <button class="tab-button active" onclick="switchTab('cover-letter')">Cover Letter</button>
-                <button class="tab-button" onclick="switchTab('blurb')">Blurb</button>
-                <button class="tab-button" onclick="switchTab('query')">Query</button>
-            </div>
-            
-            <!-- Cover Letter Tab -->
-            <div id="cover-letter" class="tab-content active">
-                <form onsubmit="generateCoverLetter(event)">
-                    <div class="form-group">
-                        <label>Company Name *</label>
-                        <input type="text" id="company" required placeholder="e.g., Google">
+            <!-- Auth Section (shown when not logged in) -->
+            <div class="auth-section active" id="authSection">
+                <h2>Welcome to Career-Agent</h2>
+                <p style="margin: 20px 0; color: #666;">Create a free account to get started. First 2 services are free!</p>
+                <div style="max-width: 400px; margin: 0 auto;">
+                    <form onsubmit="register(event); return false;">
+                        <div class="form-group">
+                            <label>Email (Optional - for account recovery)</label>
+                            <input type="email" id="registerEmail" placeholder="your@email.com">
+                        </div>
+                        <div class="form-group">
+                            <label>Name (Optional)</label>
+                            <input type="text" id="registerName" placeholder="Your Name">
+                        </div>
+                        <button type="submit" class="btn-primary" style="width: 100%;">Create Free Account & Get Started</button>
+                    </form>
+                    <p style="margin-top: 20px; font-size: 12px; color: #999; text-align: center;">
+                        Your account will be created instantly. No credit card required.<br>
+                        API key is automatically saved and used for you.
+                    </p>
+                    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+                        <p style="font-size: 14px; color: #666; text-align: center; margin-bottom: 15px;">
+                            Already have an account? <a href="#" onclick="showApiKeyLogin(); return false;" style="color: #667eea;">Login with API Key</a>
+                        </p>
+                        <div id="apiKeyLoginSection" style="display: none;">
+                            <div class="form-group">
+                                <label>API Key</label>
+                                <input type="password" id="apiKeyInput" placeholder="Enter your API key">
+                            </div>
+                            <button class="btn-secondary" onclick="loginWithKey()" style="width: 100%;">Login</button>
+                        </div>
                     </div>
-                    
-                    <div class="form-group">
-                        <label>Role Title *</label>
-                        <input type="text" id="role" required placeholder="e.g., Senior Product Manager">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Job Description (Optional)</label>
-                        <textarea id="job-desc" placeholder="Paste job description or key requirements..."></textarea>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Additional Context (Optional)</label>
-                        <textarea id="additional-context" placeholder="Any additional context you want the agent to consider (e.g., specific requirements, company culture, connection details, etc.)..."></textarea>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Tone</label>
-                        <select id="tone">
-                            <option value="professional">Professional</option>
-                            <option value="friendly">Friendly</option>
-                            <option value="formal">Formal</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Length</label>
-                        <select id="length">
-                            <option value="short">Short (2-3 paragraphs)</option>
-                            <option value="medium" selected>Medium (4-5 paragraphs)</option>
-                            <option value="long">Long (6+ paragraphs)</option>
-                        </select>
-                    </div>
-                    
-                    <div class="button-group">
-                        <button type="submit" class="btn-primary">Generate Cover Letter</button>
-                        <button type="button" class="btn-secondary" onclick="clearResult()">Clear</button>
-                    </div>
-                </form>
-            </div>
-            
-            <!-- Blurb Tab -->
-            <div id="blurb" class="tab-content">
-                <form onsubmit="generateBlurb(event)">
-                    <div class="form-group">
-                        <label>Purpose *</label>
-                        <input type="text" id="purpose" required placeholder="e.g., LinkedIn introduction">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Target Role (Optional)</label>
-                        <input type="text" id="target-role" placeholder="e.g., Engineering Manager">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Max Words</label>
-                        <input type="number" id="max-words" value="200" min="50" max="500">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Style</label>
-                        <select id="style">
-                            <option value="linkedin">LinkedIn</option>
-                            <option value="email">Email</option>
-                            <option value="professional">Professional</option>
-                        </select>
-                    </div>
-                    
-                    <div class="button-group">
-                        <button type="submit" class="btn-primary">Generate Blurb</button>
-                        <button type="button" class="btn-secondary" onclick="clearResult()">Clear</button>
-                    </div>
-                </form>
-            </div>
-            
-            <!-- Query Tab -->
-            <div id="query" class="tab-content">
-                <form onsubmit="sendQuery(event)">
-                    <div class="form-group">
-                        <label>Your Question *</label>
-                        <textarea id="question" required placeholder="e.g., What are Ram's key achievements at ACE Hardware?"></textarea>
-                    </div>
-                    
-                    <div class="button-group">
-                        <button type="submit" class="btn-primary">Send Query</button>
-                        <button type="button" class="btn-secondary" onclick="clearResult()">Clear</button>
-                    </div>
-                </form>
-            </div>
-            
-            <div class="loading" id="loading">
-                <div class="spinner"></div>
-                <p>Generating content... This may take 10-20 seconds.</p>
-            </div>
-            
-            <div class="result-area" id="result">
-                <h3>Generated Content:</h3>
-                <div class="result-content" id="result-content"></div>
-                <div style="margin-top: 15px;">
-                    <button class="btn-secondary" onclick="copyToClipboard()">Copy to Clipboard</button>
-                    <button class="btn-secondary" onclick="downloadResult()">Download as Text</button>
                 </div>
+            </div>
+            
+            <!-- Main Content (shown when logged in) -->
+            <div class="main-content" id="mainContent">
+                <!-- Context Upload Section -->
+                <div class="context-upload" id="contextUploadSection">
+                    <h3>📄 Upload Your Career Context</h3>
+                    <p style="margin: 10px 0; color: #666;">Upload your resume, career history, or context document to get started.</p>
+                    <div class="form-group">
+                        <label>Career Context (Markdown or Text)</label>
+                        <textarea id="contextText" placeholder="Paste your career context here, or upload a file below..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Or Upload File</label>
+                        <input type="file" id="contextFile" accept=".txt,.md,.markdown">
+                    </div>
+                    <button class="btn-primary" onclick="uploadContext()">Upload Context</button>
+                </div>
+                
+                <div id="contextUploaded" style="display: none; padding: 15px; background: #d4edda; border-radius: 6px; margin-bottom: 20px;">
+                    ✅ Career context uploaded successfully!
+                </div>
+                
+                <div class="tab-buttons">
+                    <button class="tab-button active" onclick="switchTab('cover-letter')">Cover Letter</button>
+                    <button class="tab-button" onclick="switchTab('blurb')">Blurb</button>
+                    <button class="tab-button" onclick="switchTab('job-answer')">Job Application Answer</button>
+                    <button class="tab-button" onclick="switchTab('query')">Query</button>
+                </div>
+                
+                <!-- Cover Letter Tab -->
+                <div id="cover-letter" class="tab-content active">
+                    <form onsubmit="generateCoverLetter(event)">
+                        <div class="form-group">
+                            <label>Company Name *</label>
+                            <input type="text" id="company" required placeholder="e.g., Google">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Role Title *</label>
+                            <input type="text" id="role" required placeholder="e.g., Senior Product Manager">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Job Description (Optional)</label>
+                            <textarea id="job-desc" placeholder="Paste job description or key requirements..."></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Additional Context (Optional)</label>
+                            <textarea id="additional-context" placeholder="Any additional context..."></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Tone</label>
+                            <select id="tone">
+                                <option value="professional">Professional</option>
+                                <option value="friendly">Friendly</option>
+                                <option value="formal">Formal</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Length</label>
+                            <select id="length">
+                                <option value="short">Short (2-3 paragraphs)</option>
+                                <option value="medium" selected>Medium (4-5 paragraphs)</option>
+                                <option value="long">Long (6+ paragraphs)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="button-group">
+                            <button type="submit" class="btn-primary" id="coverLetterBtn">Generate Cover Letter</button>
+                            <button type="button" class="btn-secondary" onclick="clearResult()">Clear</button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Blurb Tab -->
+                <div id="blurb" class="tab-content">
+                    <form onsubmit="generateBlurb(event)">
+                        <div class="form-group">
+                            <label>Purpose *</label>
+                            <input type="text" id="purpose" required placeholder="e.g., LinkedIn introduction">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Target Role (Optional)</label>
+                            <input type="text" id="target-role" placeholder="e.g., Engineering Manager">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Max Words</label>
+                            <input type="number" id="max-words" value="200" min="50" max="500">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Style</label>
+                            <select id="style">
+                                <option value="linkedin">LinkedIn</option>
+                                <option value="email">Email</option>
+                                <option value="professional">Professional</option>
+                            </select>
+                        </div>
+                        
+                        <div class="button-group">
+                            <button type="submit" class="btn-primary" id="blurbBtn">Generate Blurb</button>
+                            <button type="button" class="btn-secondary" onclick="clearResult()">Clear</button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Job Application Answer Tab -->
+                <div id="job-answer" class="tab-content">
+                    <form onsubmit="generateJobAnswer(event)">
+                        <div class="form-group">
+                            <label>Application Question *</label>
+                            <textarea id="app-question" required placeholder="e.g., Why do you want to work for us?"></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Company Name (Optional)</label>
+                            <input type="text" id="app-company" placeholder="e.g., Google">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Role Title (Optional)</label>
+                            <input type="text" id="app-role" placeholder="e.g., Senior Product Manager">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Job Description (Optional)</label>
+                            <textarea id="app-job-desc" placeholder="Paste the full job description here for better tailored answers..."></textarea>
+                        </div>
+                        
+                        <div class="button-group">
+                            <button type="submit" class="btn-primary" id="jobAnswerBtn">Generate Answer</button>
+                            <button type="button" class="btn-secondary" onclick="clearResult()">Clear</button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Query Tab -->
+                <div id="query" class="tab-content">
+                    <form onsubmit="sendQuery(event)">
+                        <div class="form-group">
+                            <label>Your Question *</label>
+                            <textarea id="question" required placeholder="e.g., What are my key achievements in product management?"></textarea>
+                        </div>
+                        
+                        <div class="button-group">
+                            <button type="submit" class="btn-primary" id="queryBtn">Send Query</button>
+                            <button type="button" class="btn-secondary" onclick="clearResult()">Clear</button>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>Generating content... This may take 10-20 seconds.</p>
+                </div>
+                
+                <div class="result-area" id="result">
+                    <h3>Generated Content:</h3>
+                    <div class="result-content" id="result-content"></div>
+                    <div style="margin-top: 15px;">
+                        <button class="btn-secondary" onclick="copyToClipboard()">Copy to Clipboard</button>
+                        <button class="btn-secondary" onclick="downloadResult()">Download as Text</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p><strong>Career-Agent</strong> by <a href="#" title="Octan Labs">Octan Labs</a></p>
+            <p style="font-size: 12px; color: #999; margin-top: 5px;">AI-Powered Career Materials Generator</p>
+        </div>
+    </div>
+    
+    <!-- Account Modal -->
+    <div class="modal" id="accountModal">
+        <div class="modal-content">
+            <div class="modal-header">Account Settings</div>
+            <div id="accountInfo"></div>
+            <div style="margin-top: 20px;">
+                <button class="btn-secondary" onclick="closeAccountModal()">Close</button>
             </div>
         </div>
     </div>
     
     <script>
         const API_BASE_URL = 'http://localhost:8000';
+        let currentUser = null;
+        let apiKey = localStorage.getItem('career_agent_api_key');
+        
+        // Initialize on load
+        window.addEventListener('load', async () => {
+            if (apiKey) {
+                await loginWithKey(apiKey);
+            }
+            checkHealth();
+        });
+        
+        async function checkHealth() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/health`);
+                const data = await response.json();
+                if (data.status === 'healthy') {
+                    showStatus('✅ Connected to Career-Agent API', 'success');
+                }
+            } catch (error) {
+                showStatus('⚠️ Cannot connect to API server. Make sure it is running on port 8000.', 'error');
+            }
+        }
+        
+        async function register(event) {
+            if (event) {
+                event.preventDefault();
+            }
+            
+            const email = document.getElementById('registerEmail').value;
+            const name = document.getElementById('registerName').value;
+            
+            // Show loading state
+            const btn = event ? event.target.querySelector('button[type="submit"]') || event.target : document.querySelector('button[type="submit"]');
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Creating Account...';
+            showStatus('Creating your account...', 'success');
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/v1/users`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email || null, name: name || null })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'Failed to create account');
+                }
+                
+                const data = await response.json();
+                
+                if (data.api_key) {
+                    // Automatically save and use the API key
+                    apiKey = data.api_key;
+                    localStorage.setItem('career_agent_api_key', apiKey);
+                    
+                    showStatus('✅ Account created! Logging you in...', 'success');
+                    
+                    // Automatically log them in - no need to show API key
+                    await fetchUserInfo();
+                    
+                    showStatus('✅ Welcome! You\'re all set. Upload your career context to get started.', 'success');
+                } else {
+                    throw new Error('Failed to create account - no API key received');
+                }
+            } catch (error) {
+                showStatus(`Error: ${error.message}`, 'error');
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        }
+        
+        async function loginWithKey(key = null) {
+            const keyToUse = key || document.getElementById('apiKeyInput').value;
+            if (!keyToUse) {
+                showStatus('Please enter your API key', 'error');
+                return;
+            }
+            
+            apiKey = keyToUse;
+            localStorage.setItem('career_agent_api_key', apiKey);
+            showStatus('Logging in...', 'success');
+            await fetchUserInfo();
+        }
+        
+        async function fetchUserInfo() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/v1/user-info`, {
+                    headers: { 'X-API-Key': apiKey }
+                });
+                
+                if (response.status === 401) {
+                    localStorage.removeItem('career_agent_api_key');
+                    apiKey = null;
+                    showAuthSection();
+                    showStatus('Invalid API key. Please login again.', 'error');
+                    return;
+                }
+                
+                currentUser = await response.json();
+                showMainContent();
+                updateUsageDisplay();
+            } catch (error) {
+                showStatus(`Error: ${error.message}`, 'error');
+            }
+        }
+        
+        function showAuthSection() {
+            document.getElementById('authSection').classList.add('active');
+            document.getElementById('mainContent').classList.remove('active');
+            document.getElementById('userInfoDisplay').style.display = 'none';
+            document.getElementById('loginButton').style.display = 'block';
+        }
+        
+        function showMainContent() {
+            document.getElementById('authSection').classList.remove('active');
+            document.getElementById('mainContent').classList.add('active');
+            document.getElementById('userInfoDisplay').style.display = 'block';
+            document.getElementById('loginButton').style.display = 'none';
+            
+            if (currentUser) {
+                document.getElementById('userName').textContent = currentUser.name || currentUser.email || 'User';
+            }
+        }
+        
+        function updateUsageDisplay() {
+            if (!currentUser) return;
+            
+            const used = currentUser.requests_used || 0;
+            const limit = currentUser.requests_limit || 2;
+            const percentage = limit > 0 ? (used / limit) * 100 : 0;
+            
+            document.getElementById('usageCount').textContent = used;
+            document.getElementById('usageLimit').textContent = limit === 999999 ? '∞' : limit;
+            document.getElementById('progressFill').style.width = `${Math.min(percentage, 100)}%`;
+            document.getElementById('usageDisplay').classList.add('active');
+            
+            // Update button states
+            const canMake = used < limit;
+            document.getElementById('coverLetterBtn').disabled = !canMake;
+            document.getElementById('blurbBtn').disabled = !canMake;
+            const jobAnswerBtn = document.getElementById('jobAnswerBtn');
+            if (jobAnswerBtn) jobAnswerBtn.disabled = !canMake;
+            document.getElementById('queryBtn').disabled = !canMake;
+        }
+        
+        function logout() {
+            apiKey = null;
+            currentUser = null;
+            localStorage.removeItem('career_agent_api_key');
+            showAuthSection();
+        }
+        
+        function showAuthModal() {
+            // For now, just show auth section
+            showAuthSection();
+        }
+        
+        function showApiKeyLogin() {
+            const section = document.getElementById('apiKeyLoginSection');
+            section.style.display = section.style.display === 'none' ? 'block' : 'none';
+        }
+        
+        function showAccountModal() {
+            if (!currentUser) return;
+            
+            const modal = document.getElementById('accountModal');
+            const info = document.getElementById('accountInfo');
+            
+            const tier = currentUser.subscription_tier || 'free';
+            const isPremium = tier === 'premium';
+            
+            info.innerHTML = `
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="text" value="${currentUser.email || 'Not provided'}" disabled>
+                </div>
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" value="${currentUser.name || 'Not provided'}" disabled>
+                </div>
+                <div class="form-group">
+                    <label>API Key</label>
+                    <div class="api-key-display" style="font-size: 12px;">${apiKey}</div>
+                    <p style="font-size: 12px; color: #666; margin-top: 5px;">
+                        Your API key is automatically saved and used. You only need this if accessing the API directly.
+                    </p>
+                    <button class="btn-secondary" onclick="copyApiKey()" style="margin-top: 10px;">Copy API Key</button>
+                </div>
+                <div class="subscription-card ${isPremium ? 'premium' : ''}">
+                    <h3>${isPremium ? '⭐ Premium' : 'Free'} Plan</h3>
+                    <p>Requests Used: ${currentUser.requests_used} / ${currentUser.requests_limit === 999999 ? 'Unlimited' : currentUser.requests_limit}</p>
+                    ${!isPremium ? `
+                        <button class="btn-premium" onclick="upgradeToPremium()" style="margin-top: 15px; width: 100%;">Upgrade to Premium</button>
+                    ` : ''}
+                </div>
+            `;
+            
+            modal.classList.add('active');
+        }
+        
+        function closeAccountModal() {
+            document.getElementById('accountModal').classList.remove('active');
+        }
+        
+        function copyApiKey() {
+            navigator.clipboard.writeText(apiKey).then(() => {
+                showStatus('API key copied to clipboard!', 'success');
+            });
+        }
+        
+        async function upgradeToPremium() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/v1/subscribe`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-API-Key': apiKey
+                    },
+                    body: JSON.stringify({ tier: 'premium' })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showStatus('✅ Upgraded to Premium!', 'success');
+                    await fetchUserInfo();
+                    closeAccountModal();
+                } else {
+                    throw new Error('Subscription failed');
+                }
+            } catch (error) {
+                showStatus(`Error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function uploadContext() {
+            const contextText = document.getElementById('contextText').value;
+            const fileInput = document.getElementById('contextFile');
+            const file = fileInput.files[0];
+            
+            if (!contextText && !file) {
+                showStatus('Please provide context text or upload a file', 'error');
+                return;
+            }
+            
+            showLoading();
+            
+            try {
+                const formData = new FormData();
+                if (file) {
+                    formData.append('file', file);
+                } else if (contextText) {
+                    formData.append('context_text', contextText);
+                }
+                
+                const response = await fetch(`${API_BASE_URL}/api/v1/upload-context`, {
+                    method: 'POST',
+                    headers: { 'X-API-Key': apiKey },
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showStatus('✅ Career context uploaded successfully!', 'success');
+                    document.getElementById('contextUploadSection').style.display = 'none';
+                    document.getElementById('contextUploaded').style.display = 'block';
+                } else {
+                    throw new Error('Upload failed');
+                }
+            } catch (error) {
+                showStatus(`Error: ${error.message}`, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
         
         function switchTab(tabName) {
-            // Hide all tabs
             document.querySelectorAll('.tab-content').forEach(tab => {
                 tab.classList.remove('active');
             });
@@ -357,7 +1228,6 @@
                 btn.classList.remove('active');
             });
             
-            // Show selected tab
             document.getElementById(tabName).classList.add('active');
             event.target.classList.add('active');
         }
@@ -367,7 +1237,7 @@
             statusDiv.textContent = message;
             statusDiv.className = `status ${type}`;
             setTimeout(() => {
-                statusDiv.classList.remove('success', 'error');
+                statusDiv.classList.remove('success', 'error', 'warning');
             }, 5000);
         }
         
@@ -391,102 +1261,103 @@
             document.getElementById('result-content').textContent = '';
         }
         
-        async function generateCoverLetter(event) {
-            event.preventDefault();
+        async function makeRequest(endpoint, body, buttonId) {
+            if (!apiKey) {
+                showStatus('Please login first', 'error');
+                return;
+            }
+            
             showLoading();
             
             try {
-                const response = await fetch(`${API_BASE_URL}/api/v1/cover-letter`, {
+                const response = await fetch(`${API_BASE_URL}${endpoint}`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        company_name: document.getElementById('company').value,
-                        role_title: document.getElementById('role').value,
-                        job_description: document.getElementById('job-desc').value || null,
-                        additional_context: document.getElementById('additional-context').value || null,
-                        tone: document.getElementById('tone').value,
-                        length: document.getElementById('length').value,
-                        format: 'text'
-                    })
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-API-Key': apiKey
+                    },
+                    body: JSON.stringify(body)
                 });
+                
+                if (response.status === 403) {
+                    const error = await response.json();
+                    showStatus(error.detail || 'Usage limit reached. Please upgrade to Premium.', 'warning');
+                    hideLoading();
+                    return;
+                }
+                
+                if (response.status === 401) {
+                    showStatus('Invalid API key. Please login again.', 'error');
+                    logout();
+                    hideLoading();
+                    return;
+                }
                 
                 const data = await response.json();
                 
                 if (data.success) {
                     showResult(data.content);
-                    showStatus('Cover letter generated successfully!', 'success');
+                    
+                    // Update usage info
+                    if (data.usage_info) {
+                        currentUser.requests_used = data.usage_info.requests_used;
+                        currentUser.requests_limit = data.usage_info.requests_limit;
+                        updateUsageDisplay();
+                    }
+                    
+                    showStatus('Generated successfully!', 'success');
                 } else {
                     throw new Error('Generation failed');
                 }
             } catch (error) {
-                showStatus(`Error: ${error.message}. Make sure the API server is running!`, 'error');
+                showStatus(`Error: ${error.message}`, 'error');
                 console.error(error);
             } finally {
                 hideLoading();
             }
+        }
+        
+        async function generateCoverLetter(event) {
+            event.preventDefault();
+            await makeRequest('/api/v1/cover-letter', {
+                company_name: document.getElementById('company').value,
+                role_title: document.getElementById('role').value,
+                job_description: document.getElementById('job-desc').value || null,
+                additional_context: document.getElementById('additional-context').value || null,
+                tone: document.getElementById('tone').value,
+                length: document.getElementById('length').value,
+                format: 'text'
+            }, 'coverLetterBtn');
         }
         
         async function generateBlurb(event) {
             event.preventDefault();
-            showLoading();
-            
-            try {
-                const response = await fetch(`${API_BASE_URL}/api/v1/blurb`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        purpose: document.getElementById('purpose').value,
-                        target_role: document.getElementById('target-role').value || null,
-                        max_words: parseInt(document.getElementById('max-words').value),
-                        style: document.getElementById('style').value,
-                        format: 'text'
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    showResult(data.content);
-                    showStatus('Blurb generated successfully!', 'success');
-                } else {
-                    throw new Error('Generation failed');
-                }
-            } catch (error) {
-                showStatus(`Error: ${error.message}. Make sure the API server is running!`, 'error');
-                console.error(error);
-            } finally {
-                hideLoading();
-            }
+            await makeRequest('/api/v1/blurb', {
+                purpose: document.getElementById('purpose').value,
+                target_role: document.getElementById('target-role').value || null,
+                max_words: parseInt(document.getElementById('max-words').value),
+                style: document.getElementById('style').value,
+                format: 'text'
+            }, 'blurbBtn');
+        }
+        
+        async function generateJobAnswer(event) {
+            event.preventDefault();
+            await makeRequest('/api/v1/job-application-answer', {
+                question: document.getElementById('app-question').value,
+                company_name: document.getElementById('app-company').value || null,
+                role_title: document.getElementById('app-role').value || null,
+                job_description: document.getElementById('app-job-desc').value || null,
+                format: 'text'
+            }, 'jobAnswerBtn');
         }
         
         async function sendQuery(event) {
             event.preventDefault();
-            showLoading();
-            
-            try {
-                const response = await fetch(`${API_BASE_URL}/api/v1/query`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        question: document.getElementById('question').value,
-                        format: 'text'
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    showResult(data.content);
-                    showStatus('Query processed successfully!', 'success');
-                } else {
-                    throw new Error('Query failed');
-                }
-            } catch (error) {
-                showStatus(`Error: ${error.message}. Make sure the API server is running!`, 'error');
-                console.error(error);
-            } finally {
-                hideLoading();
-            }
+            await makeRequest('/api/v1/query', {
+                question: document.getElementById('question').value,
+                format: 'text'
+            }, 'queryBtn');
         }
         
         function copyToClipboard() {
@@ -507,20 +1378,6 @@
             URL.revokeObjectURL(url);
             showStatus('Download started!', 'success');
         }
-        
-        // Check API connection on load
-        window.addEventListener('load', async () => {
-            try {
-                const response = await fetch(`${API_BASE_URL}/health`);
-                const data = await response.json();
-                if (data.agent_initialized) {
-                    showStatus('✅ Connected to Career Agent API', 'success');
-                }
-            } catch (error) {
-                showStatus('⚠️ Cannot connect to API server. Make sure it is running on port 8000.', 'error');
-            }
-        });
     </script>
 </body>
 </html>
-
