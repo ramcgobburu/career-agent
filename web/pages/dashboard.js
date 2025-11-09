@@ -615,9 +615,9 @@ export default function Dashboard({ user }) {
               </div>
             </div>
             <div className="panel-card__actions">
-              <a href="https://api.careerpilotconsulting.com" className="cta" target="_blank" rel="noreferrer">
+              <Link href="/generator" className="cta">
                 Open generator (beta)
-              </a>
+              </Link>
               <p className="muted">We’ll pull your latest context automatically during each session.</p>
             </div>
             <div className="next-prompts">
