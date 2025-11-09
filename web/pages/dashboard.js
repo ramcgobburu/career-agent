@@ -6,56 +6,6 @@ import { useSupabaseClient, useSession } from '@supabase/auth-helpers-react';
 import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs';
 import AppShell from '../components/AppShell';
 
-const highlightIcons = {
-  context: (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-      <path
-        d="M10 1.667C5.858 1.667 2.5 4.425 2.5 8.125c0 2.45 1.71 4.61 4.271 5.788l-.862 3.64a.417.417 0 0 0 .612.453L10 16.75l3.479 1.256a.417.417 0 0 0 .612-.453l-.862-3.64c2.561-1.178 4.271-3.338 4.271-5.788 0-3.7-3.358-6.458-7.5-6.458Z"
-        fill="currentColor"
-        opacity="0.3"
-      />
-      <path
-        d="M10 8.333a1.25 1.25 0 1 0 0-2.5 1.25 1.25 0 0 0 0 2.5Z"
-        fill="currentColor"
-      />
-      <path
-        d="M10 10.833c-1.512 0-2.917-.825-2.917-1.875 0-.46.385-.833.833-.833h4.168c.46 0 .833.374.833.833 0 1.05-1.405 1.875-2.917 1.875Z"
-        fill="currentColor"
-      />
-    </svg>
-  ),
-  usage: (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-      <path
-        d="M15.833 10A5.833 5.833 0 1 1 10 4.167"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        opacity="0.35"
-      />
-      <path
-        d="M16.667 5L10 11.667l-2.5-2.5"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  ),
-  streak: (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-      <path
-        d="M6.667 2.5s-1.667 3.333 1.666 5c0 0-2.5.833-2.5 3.333 0 1.666 1.5 3.334 4.167 3.334 3.333 0 5.833-2.5 5.833-5.834 0-3.333-2.916-5.833-2.916-5.833S8.333 6.667 8.333 8.334c0 1.25.833 1.666.833 1.666"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  ),
-};
-
 export default function Dashboard({ user }) {
   const supabase = useSupabaseClient();
   const router = useRouter();
@@ -371,10 +321,6 @@ export default function Dashboard({ user }) {
     return Math.min(100, Math.round((profile.requests_used / profile.requests_limit) * 100));
   }, [profile]);
 
-  const usageTotals = usageSummary?.totals || {};
-  const coverLettersGenerated = usageTotals['cover-letter'] || 0;
-  const blurbsGenerated = usageTotals['blurb'] || 0;
-  const answersGenerated = usageTotals['job-application-answer'] || 0;
   const remainingRequests =
     profile && typeof profile.requests_limit === 'number'
       ? Math.max(profile.requests_limit - profile.requests_used, 0)
@@ -442,38 +388,6 @@ export default function Dashboard({ user }) {
             )}
           </div>
         </header>
-
-        <section className="dashboard__highlights">
-          <article className="highlight-card">
-            <div className="highlight-card__icon highlight-card__icon--context">{highlightIcons.context}</div>
-            <h3>Context vault</h3>
-            <p>Keep your resume, wins, and reflections organized. Upload new material in seconds.</p>
-            <span className="highlight-card__metric">
-              {contexts.length || '—'} {contexts.length === 1 ? 'context' : 'contexts'} stored
-            </span>
-          </article>
-
-          <article className="highlight-card">
-            <div className="highlight-card__icon highlight-card__icon--usage">{highlightIcons.usage}</div>
-            <h3>Generation streak</h3>
-            <p>Craft cover letters, interview responses, and more. Stay within your plan in style.</p>
-            <span className="highlight-card__metric">
-              {coverLettersGenerated} cover letters · {blurbsGenerated} blurbs
-            </span>
-          </article>
-
-          <article className="highlight-card">
-            <div className="highlight-card__icon highlight-card__icon--streak">{highlightIcons.streak}</div>
-            <h3>Momentum insights</h3>
-            <p>Your latest activity feeds future prompts, ensuring each answer feels fresh and authentic.</p>
-            <span className="highlight-card__metric">
-              Latest activity:{' '}
-              {usageSummary?.recent_usage?.[0]
-                ? formatTimestamp(usageSummary.recent_usage[0].created_at)
-                : 'Awaiting your next run'}
-            </span>
-          </article>
-        </section>
 
         <section className="dashboard__panels">
           <article className="panel-card panel-card--context">
