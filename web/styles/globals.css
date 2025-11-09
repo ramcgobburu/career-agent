@@ -1,3 +1,202 @@
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+  background: #050910;
+  color: #e2e8f0;
+  transition: grid-template-columns 200ms ease;
+  position: relative;
+}
+
+.app-shell--collapsed .app-shell__sidebar {
+  width: 84px;
+}
+
+.app-shell__sidebar {
+  width: 260px;
+  background: rgba(6, 10, 25, 0.95);
+  border-right: 1px solid rgba(148, 163, 184, 0.15);
+  padding: 1.75rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  transition: width 200ms ease;
+  position: relative;
+  z-index: 20;
+}
+
+.app-shell__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.app-shell__logo {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #38bdf8 0%, #6366f1 100%);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.app-shell__title {
+  font-weight: 600;
+  font-size: 1rem;
+  color: rgba(226, 232, 240, 0.9);
+}
+
+.app-shell--collapsed .app-shell__title {
+  display: none;
+}
+
+.app-shell__nav ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.app-shell__nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 0.8rem;
+  border-radius: 12px;
+  color: rgba(226, 232, 240, 0.85);
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.app-shell__nav-item:hover {
+  background: rgba(99, 102, 241, 0.18);
+  color: #f8fafc;
+  transform: translateX(4px);
+}
+
+.app-shell__nav-icon {
+  font-size: 1rem;
+  width: 1.5rem;
+  text-align: center;
+}
+
+.app-shell__nav-label--hint {
+  font-size: 0.7rem;
+  margin-left: auto;
+  color: rgba(148, 163, 184, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.app-shell__nav-item--disabled {
+  color: rgba(148, 163, 184, 0.6);
+  cursor: not-allowed;
+  position: relative;
+}
+
+.app-shell__nav-item--disabled:hover {
+  background: rgba(15, 23, 42, 0.35);
+  transform: none;
+}
+
+.app-shell__nav li.active .app-shell__nav-item {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.2) 0%, rgba(99, 102, 241, 0.2) 100%);
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  color: #f8fafc;
+}
+
+.app-shell--collapsed .app-shell__nav-label,
+.app-shell--collapsed .app-shell__nav-label--hint {
+  display: none;
+}
+
+.app-shell__collapse {
+  margin-top: auto;
+  align-self: flex-start;
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  color: rgba(226, 232, 240, 0.8);
+  border-radius: 10px;
+  padding: 0.4rem 0.6rem;
+  cursor: pointer;
+  transition: transform 160ms ease, border 160ms ease;
+}
+
+.app-shell__collapse:hover {
+  border-color: rgba(226, 232, 240, 0.6);
+  transform: translateX(2px);
+}
+
+.app-shell__main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: transparent;
+  overflow: hidden;
+}
+
+.app-shell__mobile-header {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+  background: rgba(6, 10, 25, 0.95);
+  color: rgba(226, 232, 240, 0.85);
+}
+
+.app-shell__mobile-toggle {
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 1.35rem;
+  cursor: pointer;
+}
+
+.app-shell__content {
+  flex: 1;
+  overflow: auto;
+}
+
+.app-shell__backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 7, 17, 0.6);
+  z-index: 10;
+}
+
+@media (max-width: 960px) {
+  .app-shell__sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    height: 100vh;
+    transform: translateX(-100%);
+    transition: transform 200ms ease;
+    width: clamp(240px, 65vw, 280px);
+  }
+
+  .app-shell--mobile-open .app-shell__sidebar {
+    transform: translateX(0);
+  }
+
+  .app-shell__collapse {
+    display: none;
+  }
+
+  .app-shell__main {
+    padding-top: 0;
+  }
+
+  .app-shell__mobile-header {
+    display: flex;
+  }
+}
 :root {
   color-scheme: light;
   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;

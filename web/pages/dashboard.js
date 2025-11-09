@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useSupabaseClient, useSession } from '@supabase/auth-helpers-react';
 import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs';
+import AppShell from '../components/AppShell';
 
 const highlightIcons = {
   context: (
@@ -404,7 +405,7 @@ export default function Dashboard({ user }) {
   );
 
   return (
-    <>
+    <AppShell>
       <Head>
         <title>CareerPilot Dashboard</title>
       </Head>
@@ -634,7 +635,7 @@ export default function Dashboard({ user }) {
           </article>
         </section>
       </main>
-    </>
+    </AppShell>
   );
 }
 

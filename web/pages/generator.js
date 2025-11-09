@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useSupabaseClient, useSession } from '@supabase/auth-helpers-react';
 import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs';
+import AppShell from '../components/AppShell';
 
 const toneOptions = [
   { value: 'professional', label: 'Professional' },
@@ -311,7 +312,7 @@ export default function Generator({ user }) {
   };
 
   return (
-    <>
+    <AppShell>
       <Head>
         <title>Generator | CareerPilot</title>
       </Head>
@@ -415,7 +416,7 @@ export default function Generator({ user }) {
           </aside>
         </section>
       </main>
-    </>
+    </AppShell>
   );
 }
 
