@@ -279,6 +279,91 @@
   font-size: 0.95rem;
 }
 
+@media (max-width: 1024px) {
+  .landing {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+
+  .landing__spotlight {
+    padding: 3rem clamp(1.5rem, 5vw, 3rem) 2rem;
+    max-width: none;
+    text-align: center;
+    align-items: center;
+  }
+
+  .spotlight__stats {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+
+  .landing__auth {
+    padding: 0 clamp(1.5rem, 5vw, 3rem) 4rem;
+  }
+
+  .auth-card {
+    margin: 0 auto;
+  }
+}
+
+@media (max-width: 640px) {
+  .landing {
+    background: linear-gradient(180deg, #0f172a 0%, #1e3a8a 35%, #0f172a 70%);
+  }
+
+  .landing__spotlight {
+    padding-top: 2.5rem;
+    gap: 1.5rem;
+  }
+
+  .landing__spotlight h1 {
+    font-size: clamp(2.15rem, 8vw, 2.6rem);
+  }
+
+  .spotlight__stats {
+    grid-template-columns: 1fr;
+  }
+
+  .spotlight__stats li {
+    padding: 1rem;
+    border-radius: 16px;
+  }
+
+  .landing__auth {
+    padding-bottom: 3rem;
+  }
+
+  .auth-card {
+    padding: 2rem clamp(1.25rem, 6vw, 2rem);
+    border-radius: 28px;
+    gap: 1.35rem;
+  }
+
+  .auth-card__tabs {
+    width: 100%;
+  }
+
+  .auth-card__form {
+    gap: 0.85rem;
+  }
+
+  .google-btn {
+    width: 100%;
+  }
+
+  .auth-card__disclaimer {
+    font-size: 0.82rem;
+  }
+}
+
+.error {
+  margin-top: 0.5rem;
+}
+
+.muted {
+  color: #94a3b8;
+  font-size: 0.95rem;
+}
+
 .dashboard {
   padding: 3rem 5vw;
   background: #f8fafc;
