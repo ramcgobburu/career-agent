@@ -12,7 +12,6 @@ from typing import Optional, List, Dict, Any
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Depends, Header, UploadFile, File, Form, Request
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response, JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -37,11 +36,21 @@ except ImportError:
     STRIPE_AVAILABLE = False
     stripe = None
 
+try:
+    from supabase import create_client, Client
+    SUPABASE_CLIENT_AVAILABLE = True
+except ImportError:
+    SUPABASE_CLIENT_AVAILABLE = False
+    Client = None
+    create_client = None
+
 from career_agent import CareerAgent
 from database import (
     get_db, init_db, get_user_by_api_key, get_active_context_for_user,
     create_user, save_user_context, User, can_user_make_request,
-    record_usage, update_subscription, get_usage_limit_for_tier
+    record_usage, update_subscription, get_usage_limit_for_tier,
+    get_user_by_email, list_user_contexts, delete_user_context,
+    get_recent_usage_records
 )
 
 # Load environment variables
@@ -88,6 +97,27 @@ if STRIPE_AVAILABLE:
 else:
     logger.info("Stripe not installed. Install with: pip install stripe")
     STRIPE_WEBHOOK_SECRET = None
+
+# Supabase configuration
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+supabase_client: Optional["Client"] = None
+SUPABASE_AUTH_ENABLED = False
+
+if SUPABASE_CLIENT_AVAILABLE:
+    if SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY:
+        try:
+            supabase_client = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+            SUPABASE_AUTH_ENABLED = True
+            logger.info("Supabase auth verification enabled")
+        except Exception as exc:
+            logger.error(f"Failed to initialize Supabase client: {exc}")
+            SUPABASE_AUTH_ENABLED = False
+    else:
+        if IS_PRODUCTION:
+            logger.warning("Supabase auth disabled. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY to enable token verification.")
+else:
+    logger.info("Supabase client not installed. Install with: pip install supabase")
 
 # CORS configuration - environment-aware
 if IS_PRODUCTION:
@@ -155,21 +185,74 @@ security = HTTPBearer(auto_error=False)
 agent_cache: Dict[str, CareerAgent] = {}
 
 
-# Dependency to get current user (supports both Bearer token and X-API-Key header)
+# Dependency to get current user (supports Supabase tokens and API keys)
 async def get_current_user(
     x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
     db: Session = Depends(get_db)
 ) -> User:
-    """Get current user from API key in header or Bearer token"""
-    api_key = x_api_key or (credentials.credentials if credentials else None)
-    
+    """Resolve the current user via Supabase access token or legacy API key."""
+    bearer_token = credentials.credentials if credentials else None
+    api_key = x_api_key
+
+    # Prefer Supabase authentication if configured
+    if SUPABASE_AUTH_ENABLED and supabase_client:
+        if not bearer_token:
+            # Allow legacy API key fallback if provided
+            if api_key:
+                user = get_user_by_api_key(db, api_key)
+                if not user:
+                    raise HTTPException(status_code=401, detail="Invalid API key")
+                return user
+            raise HTTPException(
+                status_code=401,
+                detail="Authorization token missing. Provide Authorization: Bearer <access_token>."
+            )
+
+        try:
+            supabase_response = supabase_client.auth.get_user(bearer_token)
+            supabase_user = getattr(supabase_response, "user", None)
+        except Exception as exc:
+            logger.warning(f"Supabase token verification failed: {exc}")
+            raise HTTPException(status_code=401, detail="Invalid or expired Supabase access token")
+
+        if not supabase_user:
+            raise HTTPException(status_code=401, detail="Invalid Supabase session")
+
+        email = getattr(supabase_user, "email", None)
+        metadata = getattr(supabase_user, "user_metadata", {}) or {}
+        full_name = metadata.get("full_name") or metadata.get("name")
+
+        if not email:
+            raise HTTPException(status_code=400, detail="Supabase user is missing an email address")
+
+        user = get_user_by_email(db, email)
+        if not user:
+            user = create_user(
+                db,
+                email=email,
+                name=full_name,
+                user_id=getattr(supabase_user, "id", None)
+            )
+            logger.info(f"Provisioned new application user for Supabase account {email}")
+        else:
+            updated = False
+            if full_name and user.name != full_name:
+                user.name = full_name
+                updated = True
+            if updated:
+                db.commit()
+                db.refresh(user)
+        return user
+
+    # Legacy API key authentication fallback
+    api_key = api_key or bearer_token
     if not api_key:
         raise HTTPException(
             status_code=401,
-            detail="API key required. Provide X-API-Key header or Authorization Bearer token"
+            detail="Authentication required. Provide Supabase access token or X-API-Key header."
         )
-    
+
     user = get_user_by_api_key(db, api_key)
     if not user:
         raise HTTPException(status_code=401, detail="Invalid API key")
@@ -229,10 +312,21 @@ class CreateUserResponse(BaseModel):
 class UploadContextRequest(BaseModel):
     context_text: Optional[str] = Field(None, description="Career context as text")
 
+class UserContextSummary(BaseModel):
+    id: str
+    user_id: str
+    file_name: Optional[str]
+    file_type: Optional[str]
+    uploaded_at: str
+    is_active: bool
+    character_count: int
+    preview: Optional[str]
+
 class UploadContextResponse(BaseModel):
     success: bool
     message: str
     context_id: str
+    context: Optional[UserContextSummary] = None
 
 class UserInfoResponse(BaseModel):
     user_id: str
@@ -243,6 +337,65 @@ class UserInfoResponse(BaseModel):
     requests_limit: int
     subscription_status: str
     subscription_expires_at: Optional[str]
+
+class UsageRecordSummary(BaseModel):
+    id: str
+    endpoint: str
+    created_at: str
+
+class UsageSummaryResponse(BaseModel):
+    requests_used: int
+    requests_limit: int
+    recent_usage: List[UsageRecordSummary]
+
+class ContextListResponse(BaseModel):
+    contexts: List[UserContextSummary]
+
+class DeleteContextResponse(BaseModel):
+    success: bool
+    message: str
+
+
+def serialize_user_info(user: User) -> UserInfoResponse:
+    """Helper to format user info responses consistently."""
+    limit = get_usage_limit_for_tier(user.subscription_tier)
+    expires_at_str = user.subscription_expires_at.isoformat() if user.subscription_expires_at else None
+
+    return UserInfoResponse(
+        user_id=user.id,
+        email=user.email,
+        name=user.name,
+        subscription_tier=user.subscription_tier,
+        requests_used=user.requests_used,
+        requests_limit=limit,
+        subscription_status=user.subscription_status,
+        subscription_expires_at=expires_at_str
+    )
+
+def serialize_context_summary(context) -> UserContextSummary:
+    """Convert a UserContext ORM object into a serializable summary."""
+    text = context.context_text or ""
+    preview = text.strip()[:160]
+    if len(text.strip()) > 160:
+        preview = preview.rstrip() + "…"
+    return UserContextSummary(
+        id=context.id,
+        user_id=context.user_id,
+        file_name=context.file_name,
+        file_type=context.file_type,
+        uploaded_at=context.uploaded_at.isoformat() if context.uploaded_at else datetime.now().isoformat(),
+        is_active=context.is_active,
+        character_count=len(text),
+        preview=preview or None
+    )
+
+def serialize_usage_record(record) -> UsageRecordSummary:
+    """Convert a UsageRecord ORM object into a summary."""
+    return UsageRecordSummary(
+        id=record.id,
+        endpoint=record.endpoint,
+        created_at=record.created_at.isoformat() if record.created_at else datetime.now().isoformat()
+    )
 
 class SubscriptionRequest(BaseModel):
     tier: str = Field(..., description="Subscription tier: free or premium")
@@ -381,12 +534,16 @@ async def api_info():
             "create_user": "/api/v1/users",
             "user_info": "/api/v1/user-info",
             "upload_context": "/api/v1/upload-context",
+            "list_contexts": "/api/v1/contexts",
+            "delete_context": "/api/v1/contexts/{context_id}",
             "subscribe": "/api/v1/subscribe",
             "cover_letter": "/api/v1/cover-letter",
             "blurb": "/api/v1/blurb",
             "job_application_answer": "/api/v1/job-application-answer",
-            "query": "/api/v1/query"
+            "query": "/api/v1/query",
+            "usage_summary": "/api/v1/usage"
         },
+        "authentication": "Use Supabase access token in Authorization header or X-API-Key for legacy clients",
         "docs": "/docs"
     }
 
@@ -400,7 +557,8 @@ async def health_check():
         "database": "connected",
         "agent_cache_size": len(agent_cache),
         "rate_limiting": RATE_LIMITING_AVAILABLE,
-        "stripe_available": STRIPE_AVAILABLE
+        "stripe_available": STRIPE_AVAILABLE,
+        "supabase_auth": SUPABASE_AUTH_ENABLED
     }
 
 
@@ -432,24 +590,15 @@ async def create_user_endpoint(
 @app.get("/api/v1/user-info", response_model=UserInfoResponse)
 async def get_user_info(
     user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
 ):
     """Get current user's information and usage stats."""
-    limit = get_usage_limit_for_tier(user.subscription_tier)
-    expires_at_str = None
-    if user.subscription_expires_at:
-        expires_at_str = user.subscription_expires_at.isoformat()
-    
-    return UserInfoResponse(
-        user_id=user.id,
-        email=user.email,
-        name=user.name,
-        subscription_tier=user.subscription_tier,
-        requests_used=user.requests_used,
-        requests_limit=limit,
-        subscription_status=user.subscription_status,
-        subscription_expires_at=expires_at_str
-    )
+    return serialize_user_info(user)
+
+
+@app.get("/api/v1/me", response_model=UserInfoResponse)
+async def get_authenticated_user_profile(user: User = Depends(get_current_user)):
+    """Return authenticated user's profile (Supabase or legacy)."""
+    return serialize_user_info(user)
 
 
 @app.post("/api/v1/upload-context", response_model=UploadContextResponse)
@@ -516,11 +665,62 @@ async def upload_context(
         return UploadContextResponse(
             success=True,
             message="Career context uploaded successfully",
-            context_id=context.id
+            context_id=context.id,
+            context=serialize_context_summary(context)
         )
     except Exception as e:
         logger.error(f"Error saving context for user {user.id}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Error saving context. Please try again.")
+
+
+@app.get("/api/v1/contexts", response_model=ContextListResponse)
+async def get_user_contexts(
+    limit: int = 20,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """List the most recent contexts uploaded by the authenticated user."""
+    limit = max(1, min(limit, 50))
+    contexts = list_user_contexts(db, user.id, limit=limit)
+    return ContextListResponse(
+        contexts=[serialize_context_summary(ctx) for ctx in contexts]
+    )
+
+
+@app.delete("/api/v1/contexts/{context_id}", response_model=DeleteContextResponse)
+async def delete_user_context_endpoint(
+    context_id: str,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Delete a context document for the authenticated user."""
+    deleted = delete_user_context(db, user.id, context_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Context not found")
+
+    if user.id in agent_cache:
+        agent_cache.pop(user.id, None)
+        logger.info(f"Cleared agent cache for user {user.id} after context deletion")
+
+    return DeleteContextResponse(success=True, message="Context deleted successfully")
+
+
+@app.get("/api/v1/usage", response_model=UsageSummaryResponse)
+async def get_usage_summary(
+    limit: int = 10,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Return recent usage history for the authenticated user."""
+    limit = max(1, min(limit, 50))
+    records = get_recent_usage_records(db, user.id, limit=limit)
+    limit_per_tier = get_usage_limit_for_tier(user.subscription_tier)
+
+    return UsageSummaryResponse(
+        requests_used=user.requests_used,
+        requests_limit=limit_per_tier,
+        recent_usage=[serialize_usage_record(record) for record in records]
+    )
 
 
 # Helper function for rate limiting decorator

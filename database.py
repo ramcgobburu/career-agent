@@ -5,7 +5,7 @@ import os
 import secrets
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Optional, Tuple, List
 
 from sqlalchemy import create_engine, Column, String, Text, DateTime, ForeignKey, Boolean, Integer
 from sqlalchemy.ext.declarative import declarative_base
@@ -121,10 +121,16 @@ def get_active_context_for_user(db: Session, user_id: str) -> Optional[UserConte
     ).order_by(UserContext.uploaded_at.desc()).first()
 
 
-def create_user(db: Session, email: Optional[str] = None, name: Optional[str] = None) -> User:
-    """Create a new user with generated API key"""
-    user_id = generate_user_id()
-    api_key = generate_api_key()
+def create_user(
+    db: Session,
+    email: Optional[str] = None,
+    name: Optional[str] = None,
+    user_id: Optional[str] = None,
+    api_key: Optional[str] = None
+) -> User:
+    """Create a new user with generated identifiers unless provided"""
+    user_id = user_id or generate_user_id()
+    api_key = api_key or generate_api_key()
     
     user = User(
         id=user_id,
@@ -140,6 +146,13 @@ def create_user(db: Session, email: Optional[str] = None, name: Optional[str] = 
     db.commit()
     db.refresh(user)
     return user
+
+
+def get_user_by_email(db: Session, email: str) -> Optional[User]:
+    """Fetch a user by email address"""
+    if not email:
+        return None
+    return db.query(User).filter(User.email == email, User.is_active == True).first()
 
 
 def get_usage_limit_for_tier(tier: str) -> int:
@@ -236,5 +249,54 @@ def save_user_context(
     db.commit()
     db.refresh(context)
     return context
+
+
+def list_user_contexts(db: Session, user_id: str, limit: int = 20) -> List[UserContext]:
+    """Return recent contexts for a user, newest first."""
+    return (
+        db.query(UserContext)
+        .filter(UserContext.user_id == user_id)
+        .order_by(UserContext.uploaded_at.desc())
+        .limit(limit)
+        .all()
+    )
+
+
+def delete_user_context(db: Session, user_id: str, context_id: str) -> bool:
+    """Delete a user context and promote the most recent remaining context to active if needed."""
+    context = (
+        db.query(UserContext)
+        .filter(UserContext.id == context_id, UserContext.user_id == user_id)
+        .first()
+    )
+    if not context:
+        return False
+
+    was_active = context.is_active
+    db.delete(context)
+    db.commit()
+
+    if was_active:
+        latest_context = (
+            db.query(UserContext)
+            .filter(UserContext.user_id == user_id)
+            .order_by(UserContext.uploaded_at.desc())
+            .first()
+        )
+        if latest_context and not latest_context.is_active:
+            latest_context.is_active = True
+            db.commit()
+    return True
+
+
+def get_recent_usage_records(db: Session, user_id: str, limit: int = 10) -> List[UsageRecord]:
+    """Return the most recent usage records for a user."""
+    return (
+        db.query(UsageRecord)
+        .filter(UsageRecord.user_id == user_id)
+        .order_by(UsageRecord.created_at.desc())
+        .limit(limit)
+        .all()
+    )
 
 
