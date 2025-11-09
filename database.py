@@ -5,7 +5,7 @@ import os
 import secrets
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Tuple, List
+from typing import Optional, Tuple, List, Dict
 
 from sqlalchemy import create_engine, Column, String, Text, DateTime, ForeignKey, Boolean, Integer
 from sqlalchemy.ext.declarative import declarative_base
@@ -249,6 +249,54 @@ def save_user_context(
     db.commit()
     db.refresh(context)
     return context
+
+
+def append_to_active_context(
+    db: Session,
+    user_id: str,
+    additional_text: str
+) -> UserContext:
+    """Append additional text to the user's active context, creating one if absent."""
+    additional_text = additional_text.strip()
+    if not additional_text:
+        raise ValueError("Additional context text cannot be empty.")
+
+    context = get_active_context_for_user(db, user_id)
+    if context:
+        separator = "\n\n" if context.context_text else ""
+        context.context_text = f"{context.context_text}{separator}{additional_text}"
+        context.updated_at = datetime.now()
+        db.commit()
+        db.refresh(context)
+        return context
+
+    # No active context exists; create a new one
+    return save_user_context(
+        db,
+        user_id=user_id,
+        context_text=additional_text,
+        file_name=None,
+        file_type=None
+    )
+
+
+def get_context_by_id(db: Session, context_id: str, user_id: Optional[str] = None) -> Optional[UserContext]:
+    """Fetch a context by ID, optionally ensuring it belongs to the specified user."""
+    query = db.query(UserContext).filter(UserContext.id == context_id)
+    if user_id:
+        query = query.filter(UserContext.user_id == user_id)
+    return query.first()
+
+
+def get_usage_counts(db: Session, user_id: str) -> Dict[str, int]:
+    """Aggregate usage counts per endpoint for the user."""
+    records = (
+        db.query(UsageRecord.endpoint, func.count(UsageRecord.id))
+        .filter(UsageRecord.user_id == user_id)
+        .group_by(UsageRecord.endpoint)
+        .all()
+    )
+    return {endpoint: count for endpoint, count in records}
 
 
 def list_user_contexts(db: Session, user_id: str, limit: int = 20) -> List[UserContext]:

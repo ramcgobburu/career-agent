@@ -466,6 +466,20 @@
   transform: translateY(-1px);
 }
 
+.ghost--bright {
+  background: rgba(79, 70, 229, 0.25);
+  border: 1px solid rgba(129, 140, 248, 0.45);
+  color: rgba(224, 231, 255, 0.95);
+}
+
+.ghost--muted {
+  color: rgba(148, 163, 184, 0.8);
+}
+
+.ghost--muted:hover {
+  border-color: rgba(148, 163, 184, 0.6);
+}
+
 .badge--plan {
   width: fit-content;
   background: rgba(79, 70, 229, 0.25);
@@ -596,6 +610,23 @@
 .panel-card__header p {
   margin: 0.3rem 0 0;
   color: rgba(203, 213, 225, 0.78);
+}
+
+.append-form {
+  margin-top: 1rem;
+  padding: 1.2rem;
+  border-radius: 20px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.append-form__actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
 .panel-card__body {
@@ -776,7 +807,7 @@
 
 .context-list__name {
   font-weight: 600;
-  color: #0f172a;
+  color: rgba(241, 245, 249, 0.95);
 }
 
 .badge {
@@ -801,6 +832,18 @@
   color: rgba(203, 213, 225, 0.8);
   margin: 0 0 0.5rem;
   line-height: 1.5;
+}
+
+.context-list__links {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.link--inline {
+  color: rgba(125, 211, 252, 0.92);
+  padding: 0;
+  margin: 0;
 }
 
 .context-list__details {
@@ -848,9 +891,56 @@
   color: rgba(226, 232, 240, 0.92);
 }
 
+.trial-banner {
+  margin: 0;
+  padding: 0.85rem 1rem;
+  border-radius: 16px;
+  background: rgba(251, 191, 36, 0.15);
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  color: rgba(250, 204, 21, 0.95);
+  font-weight: 600;
+}
+
 .badge--endpoint {
   background: rgba(79, 70, 229, 0.25);
   color: rgba(224, 231, 255, 0.95);
+}
+
+.next-prompts {
+  margin-top: 1rem;
+  background: rgba(15, 23, 42, 0.6);
+  border-radius: 20px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.next-prompts h3 {
+  margin: 0;
+  color: rgba(226, 232, 240, 0.92);
+  font-size: 1.05rem;
+}
+
+.next-prompts ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.next-prompts li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  color: rgba(203, 213, 225, 0.8);
+}
+
+.next-prompts li strong {
+  color: rgba(224, 242, 254, 0.92);
 }
 
 @media (max-width: 1024px) {

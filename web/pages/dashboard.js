@@ -79,6 +79,11 @@ export default function Dashboard({ user }) {
   const [uploadError, setUploadError] = useState(null);
   const [uploadMessage, setUploadMessage] = useState(null);
 
+  const [appendText, setAppendText] = useState('');
+  const [appendPending, setAppendPending] = useState(false);
+  const [appendError, setAppendError] = useState(null);
+  const [appendMessage, setAppendMessage] = useState(null);
+
   const [deletingContextId, setDeletingContextId] = useState(null);
 
   const apiBaseUrl = useMemo(() => {
@@ -205,6 +210,12 @@ export default function Dashboard({ user }) {
     setUploadMessage(null);
   };
 
+  const handleAppendReset = () => {
+    setAppendText('');
+    setAppendError(null);
+    setAppendMessage(null);
+  };
+
   const handleUpload = async (event) => {
     event.preventDefault();
 
@@ -253,6 +264,48 @@ export default function Dashboard({ user }) {
       setUploadError(err.message);
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleAppend = async (event) => {
+    event.preventDefault();
+
+    if (!apiBaseUrl || !accessToken) {
+      return;
+    }
+
+    if (!appendText.trim()) {
+      setAppendError('Add text before appending.');
+      return;
+    }
+
+    setAppendPending(true);
+    setAppendError(null);
+    setAppendMessage(null);
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/v1/append-context`, {
+        method: 'POST',
+        headers: {
+          ...authHeaders,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text: appendText }),
+      });
+
+      if (!response.ok) {
+        const errorBody = await response.json().catch(() => ({}));
+        throw new Error(errorBody.detail || 'Unable to append context');
+      }
+
+      const data = await response.json();
+      setAppendMessage(data.message || 'Context updated.');
+      setAppendText('');
+      await Promise.all([fetchContexts(), fetchProfile()]);
+    } catch (err) {
+      setAppendError(err.message);
+    } finally {
+      setAppendPending(false);
     }
   };
 
@@ -317,6 +370,39 @@ export default function Dashboard({ user }) {
     return Math.min(100, Math.round((profile.requests_used / profile.requests_limit) * 100));
   }, [profile]);
 
+  const usageTotals = usageSummary?.totals || {};
+  const coverLettersGenerated = usageTotals['cover-letter'] || 0;
+  const blurbsGenerated = usageTotals['blurb'] || 0;
+  const answersGenerated = usageTotals['job-application-answer'] || 0;
+  const remainingRequests =
+    profile && typeof profile.requests_limit === 'number'
+      ? Math.max(profile.requests_limit - profile.requests_used, 0)
+      : null;
+  const trialMessage =
+    profile?.subscription_tier === 'free'
+      ? remainingRequests === 0
+        ? 'You have used both complimentary requests. Unlock unlimited access with the premium plan.'
+        : `You have ${remainingRequests} complimentary ${remainingRequests === 1 ? 'request' : 'requests'} left before upgrading.`
+      : 'You are on a premium plan with extended access.';
+
+  const nextPrompts = useMemo(
+    () => [
+      {
+        title: 'Interview prep',
+        description: 'Ask for “five behavioral interview questions based on my experience and sample answers.”',
+      },
+      {
+        title: 'STAR story polish',
+        description: 'Prompt: “Turn my latest project win into a STAR-format story highlighting metrics.”',
+      },
+      {
+        title: 'Quick LinkedIn outreach',
+        description: 'Prompt: “Draft a 100-word LinkedIn DM for a recruiter at {companyName} referencing my achievements.”',
+      },
+    ],
+    []
+  );
+
   return (
     <>
       <Head>
@@ -361,7 +447,9 @@ export default function Dashboard({ user }) {
             <div className="highlight-card__icon highlight-card__icon--context">{highlightIcons.context}</div>
             <h3>Context vault</h3>
             <p>Keep your resume, wins, and reflections organized. Upload new material in seconds.</p>
-            <span className="highlight-card__metric">{contexts.length || '—'} active contexts</span>
+            <span className="highlight-card__metric">
+              {contexts.length || '—'} {contexts.length === 1 ? 'context' : 'contexts'} stored
+            </span>
           </article>
 
           <article className="highlight-card">
@@ -369,7 +457,7 @@ export default function Dashboard({ user }) {
             <h3>Generation streak</h3>
             <p>Craft cover letters, interview responses, and more. Stay within your plan in style.</p>
             <span className="highlight-card__metric">
-              {profile?.requests_used ?? '—'} total generations
+              {coverLettersGenerated} cover letters · {blurbsGenerated} blurbs
             </span>
           </article>
 
@@ -378,6 +466,7 @@ export default function Dashboard({ user }) {
             <h3>Momentum insights</h3>
             <p>Your latest activity feeds future prompts, ensuring each answer feels fresh and authentic.</p>
             <span className="highlight-card__metric">
+              Latest activity:{' '}
               {usageSummary?.recent_usage?.[0]
                 ? formatTimestamp(usageSummary.recent_usage[0].created_at)
                 : 'Awaiting your next run'}
@@ -419,6 +508,29 @@ export default function Dashboard({ user }) {
               {uploadError && <p className="error">Upload failed: {uploadError}</p>}
             </form>
 
+            <form className="append-form" onSubmit={handleAppend}>
+              <div className="input-group">
+                <label htmlFor="append-text">Add to existing context</label>
+                <textarea
+                  id="append-text"
+                  rows={4}
+                  value={appendText}
+                  onChange={(e) => setAppendText(e.target.value)}
+                  placeholder="Add notes from your latest project, certifications, or performance reviews…"
+                />
+              </div>
+              <div className="append-form__actions">
+                <button type="submit" className="ghost ghost--bright" disabled={appendPending}>
+                  {appendPending ? 'Appending…' : 'Append text'}
+                </button>
+                <button type="button" className="ghost ghost--muted" onClick={handleAppendReset} disabled={appendPending}>
+                  Clear
+                </button>
+              </div>
+              {appendMessage && <p className="success">{appendMessage}</p>}
+              {appendError && <p className="error">{appendError}</p>}
+            </form>
+
             <div className="panel-card__body">
               {loadingContexts && <p className="muted">Loading contexts…</p>}
               {contextsError && <p className="error">Unable to load contexts: {contextsError}</p>}
@@ -435,6 +547,16 @@ export default function Dashboard({ user }) {
                           {ctx.is_active && <span className="badge badge--active">Active</span>}
                         </div>
                         <p className="context-list__preview">{ctx.preview || 'No preview available.'}</p>
+                        <div className="context-list__links">
+                          <a
+                            href={ctx.download_url}
+                            className="link link--inline"
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            Download context
+                          </a>
+                        </div>
                         <p className="context-list__details">
                           {formatTimestamp(ctx.uploaded_at)} · {ctx.character_count.toLocaleString()} characters
                         </p>
@@ -468,6 +590,7 @@ export default function Dashboard({ user }) {
             <div className="panel-card__body">
               {loadingUsage && <p className="muted">Loading usage history…</p>}
               {usageError && <p className="error">Unable to load usage: {usageError}</p>}
+              {trialMessage && <p className="trial-banner">{trialMessage}</p>}
               {!loadingUsage && !usageError && usageSummary && usageSummary.recent_usage?.length > 0 && (
                 <ul className="usage-list">
                   {usageSummary.recent_usage.map((record) => (
@@ -492,10 +615,21 @@ export default function Dashboard({ user }) {
               </div>
             </div>
             <div className="panel-card__actions">
-              <a href="https://careerpilotconsulting.com" className="cta" target="_blank" rel="noreferrer">
+              <a href="https://api.careerpilotconsulting.com" className="cta" target="_blank" rel="noreferrer">
                 Open generator (beta)
               </a>
               <p className="muted">We’ll pull your latest context automatically during each session.</p>
+            </div>
+            <div className="next-prompts">
+              <h3>Try these prompts next</h3>
+              <ul>
+                {nextPrompts.map((prompt) => (
+                  <li key={prompt.title}>
+                    <strong>{prompt.title}</strong>
+                    <span>{prompt.description}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
           </article>
         </section>

@@ -50,7 +50,8 @@ from database import (
     create_user, save_user_context, User, can_user_make_request,
     record_usage, update_subscription, get_usage_limit_for_tier,
     get_user_by_email, list_user_contexts, delete_user_context,
-    get_recent_usage_records
+    get_recent_usage_records, append_to_active_context, get_context_by_id,
+    get_usage_counts
 )
 
 # Load environment variables
@@ -321,6 +322,7 @@ class UserContextSummary(BaseModel):
     is_active: bool
     character_count: int
     preview: Optional[str]
+    download_url: Optional[str] = None
 
 class UploadContextResponse(BaseModel):
     success: bool
@@ -347,6 +349,7 @@ class UsageSummaryResponse(BaseModel):
     requests_used: int
     requests_limit: int
     recent_usage: List[UsageRecordSummary]
+    totals: Dict[str, int]
 
 class ContextListResponse(BaseModel):
     contexts: List[UserContextSummary]
@@ -354,6 +357,15 @@ class ContextListResponse(BaseModel):
 class DeleteContextResponse(BaseModel):
     success: bool
     message: str
+
+class AppendContextRequest(BaseModel):
+    text: str = Field(..., description="Additional text to append to the active context.")
+
+    @validator('text')
+    def validate_text(cls, v):
+        if len(v.strip()) < 20:
+            raise ValueError('Additional context must be at least 20 characters.')
+        return v.strip()
 
 
 def serialize_user_info(user: User) -> UserInfoResponse:
@@ -386,7 +398,8 @@ def serialize_context_summary(context) -> UserContextSummary:
         uploaded_at=context.uploaded_at.isoformat() if context.uploaded_at else datetime.now().isoformat(),
         is_active=context.is_active,
         character_count=len(text),
-        preview=preview or None
+        preview=preview or None,
+        download_url=f"/api/v1/contexts/{context.id}/download"
     )
 
 def serialize_usage_record(record) -> UsageRecordSummary:
@@ -534,8 +547,10 @@ async def api_info():
             "create_user": "/api/v1/users",
             "user_info": "/api/v1/user-info",
             "upload_context": "/api/v1/upload-context",
+            "append_context": "/api/v1/append-context",
             "list_contexts": "/api/v1/contexts",
             "delete_context": "/api/v1/contexts/{context_id}",
+            "download_context": "/api/v1/contexts/{context_id}/download",
             "subscribe": "/api/v1/subscribe",
             "cover_letter": "/api/v1/cover-letter",
             "blurb": "/api/v1/blurb",
@@ -673,6 +688,30 @@ async def upload_context(
         raise HTTPException(status_code=500, detail="Error saving context. Please try again.")
 
 
+@app.post("/api/v1/append-context", response_model=UploadContextResponse)
+async def append_context(
+    request: AppendContextRequest,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Append additional text to the active context without overwriting existing content."""
+    try:
+        context = append_to_active_context(db, user.id, request.text)
+        if user.id in agent_cache:
+            agent_cache.pop(user.id, None)
+        return UploadContextResponse(
+            success=True,
+            message="Additional context appended successfully.",
+            context_id=context.id,
+            context=serialize_context_summary(context)
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    except Exception as exc:
+        logger.error(f"Error appending context for user {user.id}: {exc}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Error appending context. Please try again.")
+
+
 @app.get("/api/v1/contexts", response_model=ContextListResponse)
 async def get_user_contexts(
     limit: int = 20,
@@ -705,6 +744,26 @@ async def delete_user_context_endpoint(
     return DeleteContextResponse(success=True, message="Context deleted successfully")
 
 
+@app.get("/api/v1/contexts/{context_id}/download")
+async def download_user_context(
+    context_id: str,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Download the raw text of a stored context."""
+    context = get_context_by_id(db, context_id, user.id)
+    if not context:
+        raise HTTPException(status_code=404, detail="Context not found")
+
+    return Response(
+        content=context.context_text or "",
+        media_type="text/plain",
+        headers={
+            "Content-Disposition": f'attachment; filename="{context.file_name or context.id}.txt"'
+        }
+    )
+
+
 @app.get("/api/v1/usage", response_model=UsageSummaryResponse)
 async def get_usage_summary(
     limit: int = 10,
@@ -715,11 +774,13 @@ async def get_usage_summary(
     limit = max(1, min(limit, 50))
     records = get_recent_usage_records(db, user.id, limit=limit)
     limit_per_tier = get_usage_limit_for_tier(user.subscription_tier)
+    totals = get_usage_counts(db, user.id)
 
     return UsageSummaryResponse(
         requests_used=user.requests_used,
         requests_limit=limit_per_tier,
-        recent_usage=[serialize_usage_record(record) for record in records]
+        recent_usage=[serialize_usage_record(record) for record in records],
+        totals=totals
     )
 
 
