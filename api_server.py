@@ -794,15 +794,15 @@ def rate_limit_if_available(limit: str):
 @app.post("/api/v1/subscribe", response_model=SubscriptionResponse)
 @rate_limit_if_available("5/minute")
 async def subscribe(
-    request: SubscriptionRequest,
+    payload: SubscriptionRequest,
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
-    http_request: Request = None
+    request: Request = None
 ):
     """Subscribe user to a tier (free or premium). Requires payment verification for premium."""
-    if request.tier == "premium":
+    if payload.tier == "premium":
         # Premium requires payment verification
-        if not request.payment_token:
+        if not payload.payment_token:
             raise HTTPException(
                 status_code=400,
                 detail="Payment token required for premium subscription"
@@ -825,7 +825,7 @@ async def subscribe(
             payment_intent = stripe.PaymentIntent.create(
                 amount=999,  # $9.99 in cents - adjust as needed
                 currency="usd",
-                payment_method=request.payment_token,
+                payment_method=payload.payment_token,
                 confirm=True,
                 metadata={"user_id": user.id, "subscription_tier": "premium"}
             )
@@ -856,14 +856,14 @@ async def subscribe(
         # Free tier - no payment needed
         expires_at = None
     
-    updated_user = update_subscription(db, user.id, request.tier, expires_at)
+    updated_user = update_subscription(db, user.id, payload.tier, expires_at)
     limit = get_usage_limit_for_tier(updated_user.subscription_tier)
     
-    logger.info(f"User {user.id} subscription updated to {request.tier} tier")
+    logger.info(f"User {user.id} subscription updated to {payload.tier} tier")
     
     return SubscriptionResponse(
         success=True,
-        message=f"Subscription updated to {request.tier} tier",
+        message=f"Subscription updated to {payload.tier} tier",
         subscription_tier=updated_user.subscription_tier,
         requests_limit=limit
     )
@@ -938,10 +938,10 @@ if STRIPE_AVAILABLE and STRIPE_WEBHOOK_SECRET:
 @app.post("/api/v1/cover-letter", response_model=ResponseModel)
 @rate_limit_if_available("10/minute")
 async def generate_cover_letter(
-    request: CoverLetterRequest,
+    payload: CoverLetterRequest,
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
-    http_request: Request = None
+    request: Request = None
 ):
     """Generate a personalized cover letter."""
     # Check usage limits
@@ -953,12 +953,12 @@ async def generate_cover_letter(
     
     try:
         result = agent.generate_cover_letter(
-            company_name=request.company_name,
-            role_title=request.role_title,
-            job_description=request.job_description,
-            additional_context=request.additional_context,
-            tone=request.tone,
-            length=request.length
+            company_name=payload.company_name,
+            role_title=payload.role_title,
+            job_description=payload.job_description,
+            additional_context=payload.additional_context,
+            tone=payload.tone,
+            length=payload.length
         )
         
         # Record usage
@@ -981,11 +981,11 @@ async def generate_cover_letter(
             content=formatted_content,
             sources=converted_sources,
             metadata={
-                "company": request.company_name,
-                "role": request.role_title,
-                "tone": request.tone,
-                "length": request.length,
-                "has_additional_context": bool(request.additional_context)
+                "company": payload.company_name,
+                "role": payload.role_title,
+                "tone": payload.tone,
+                "length": payload.length,
+                "has_additional_context": bool(payload.additional_context)
             },
             usage_info={
                 "requests_used": user.requests_used,
@@ -1002,10 +1002,10 @@ async def generate_cover_letter(
 @app.post("/api/v1/blurb", response_model=ResponseModel)
 @rate_limit_if_available("10/minute")
 async def generate_blurb(
-    request: BlurbRequest,
+    payload: BlurbRequest,
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
-    http_request: Request = None
+    request: Request = None
 ):
     """Generate a short blurb for LinkedIn, email, etc."""
     # Check usage limits
@@ -1017,10 +1017,10 @@ async def generate_blurb(
     
     try:
         result = agent.generate_blurb(
-            purpose=request.purpose,
-            target_role=request.target_role,
-            max_words=request.max_words,
-            style=request.style
+            purpose=payload.purpose,
+            target_role=payload.target_role,
+            max_words=payload.max_words,
+            style=payload.style
         )
         
         # Record usage
@@ -1043,10 +1043,10 @@ async def generate_blurb(
             content=formatted_content,
             sources=converted_sources,
             metadata={
-                "purpose": request.purpose,
-                "target_role": request.target_role,
-                "max_words": request.max_words,
-                "style": request.style
+                "purpose": payload.purpose,
+                "target_role": payload.target_role,
+                "max_words": payload.max_words,
+                "style": payload.style
             },
             usage_info={
                 "requests_used": user.requests_used,
@@ -1063,10 +1063,10 @@ async def generate_blurb(
 @app.post("/api/v1/job-application-answer", response_model=ResponseModel)
 @rate_limit_if_available("10/minute")
 async def generate_job_application_answer(
-    request: JobApplicationAnswerRequest,
+    payload: JobApplicationAnswerRequest,
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
-    http_request: Request = None
+    request: Request = None
 ):
     """Generate an answer to a job application question (similar to Eztrackr)."""
     # Check usage limits
@@ -1078,10 +1078,10 @@ async def generate_job_application_answer(
     
     try:
         result = agent.generate_job_application_answer(
-            question=request.question,
-            company_name=request.company_name,
-            job_description=request.job_description,
-            role_title=request.role_title
+            question=payload.question,
+            company_name=payload.company_name,
+            job_description=payload.job_description,
+            role_title=payload.role_title
         )
         
         # Record usage
@@ -1104,9 +1104,9 @@ async def generate_job_application_answer(
             content=formatted_content,
             sources=converted_sources,
             metadata={
-                "question": request.question,
-                "company": request.company_name,
-                "role": request.role_title
+                "question": payload.question,
+                "company": payload.company_name,
+                "role": payload.role_title
             },
             usage_info={
                 "requests_used": user.requests_used,
@@ -1123,10 +1123,10 @@ async def generate_job_application_answer(
 @app.post("/api/v1/query", response_model=ResponseModel)
 @rate_limit_if_available("10/minute")
 async def query_agent(
-    request: QueryRequest,
+    payload: QueryRequest,
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
-    http_request: Request = None
+    request: Request = None
 ):
     """Generic query endpoint for any career-related question."""
     # Check usage limits
@@ -1137,7 +1137,7 @@ async def query_agent(
     agent = get_or_create_agent(user, db)
     
     try:
-        result = agent.query(request.question)
+        result = agent.query(payload.question)
         
         # Record usage
         record_usage(db, user.id, "query")
@@ -1159,7 +1159,7 @@ async def query_agent(
             content=formatted_content,
             sources=converted_sources,
             metadata={
-                "question": request.question
+                "question": payload.question
             },
             usage_info={
                 "requests_used": user.requests_used,
