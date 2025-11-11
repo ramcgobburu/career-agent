@@ -459,7 +459,7 @@ class BlurbRequest(BaseModel):
     max_words: int = Field(200, description="Maximum word count")
     style: str = Field("linkedin", description="Style: linkedin, email, or professional")
     format: Optional[str] = Field("text", description="Output format: text, markdown, or json")
-    
+
     @validator('max_words')
     def validate_max_words(cls, v):
         if v < 50 or v > 1000:
