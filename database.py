@@ -17,7 +17,24 @@ Base = declarative_base()
 
 # Use SQLite for simplicity (can be upgraded to PostgreSQL later)
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./career_agent.db")
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False} if "sqlite" in DATABASE_URL else {})
+
+if DATABASE_URL.startswith("sqlite"):
+    engine = create_engine(
+        DATABASE_URL,
+        connect_args={"check_same_thread": False}
+    )
+else:
+    pool_size = int(os.getenv("DATABASE_POOL_SIZE", "5"))
+    max_overflow = int(os.getenv("DATABASE_MAX_OVERFLOW", "10"))
+    pool_recycle = int(os.getenv("DATABASE_POOL_RECYCLE_SECONDS", "900"))
+
+    engine = create_engine(
+        DATABASE_URL,
+        pool_pre_ping=True,
+        pool_size=pool_size,
+        max_overflow=max_overflow,
+        pool_recycle=pool_recycle
+    )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
