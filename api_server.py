@@ -796,7 +796,8 @@ def rate_limit_if_available(limit: str):
 async def subscribe(
     request: SubscriptionRequest,
     user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    http_request: Request = None
 ):
     """Subscribe user to a tier (free or premium). Requires payment verification for premium."""
     if request.tier == "premium":
@@ -939,7 +940,8 @@ if STRIPE_AVAILABLE and STRIPE_WEBHOOK_SECRET:
 async def generate_cover_letter(
     request: CoverLetterRequest,
     user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    http_request: Request = None
 ):
     """Generate a personalized cover letter."""
     # Check usage limits
@@ -1002,7 +1004,8 @@ async def generate_cover_letter(
 async def generate_blurb(
     request: BlurbRequest,
     user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    http_request: Request = None
 ):
     """Generate a short blurb for LinkedIn, email, etc."""
     # Check usage limits
@@ -1062,7 +1065,8 @@ async def generate_blurb(
 async def generate_job_application_answer(
     request: JobApplicationAnswerRequest,
     user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    http_request: Request = None
 ):
     """Generate an answer to a job application question (similar to Eztrackr)."""
     # Check usage limits
@@ -1121,7 +1125,8 @@ async def generate_job_application_answer(
 async def query_agent(
     request: QueryRequest,
     user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    http_request: Request = None
 ):
     """Generic query endpoint for any career-related question."""
     # Check usage limits
