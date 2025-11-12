@@ -970,7 +970,7 @@ async def generate_cover_letter(
         formatted_content = format_response(
             result["content"],
             result.get("sources", []),
-            request.format or "text"
+            payload.format or "text"
         )
         
         converted_sources = convert_sources_to_dict(result.get("sources", []))
@@ -1032,7 +1032,7 @@ async def generate_blurb(
         formatted_content = format_response(
             result["content"],
             result.get("sources", []),
-            request.format or "text"
+            payload.format or "text"
         )
         
         converted_sources = convert_sources_to_dict(result.get("sources", []))
@@ -1093,7 +1093,7 @@ async def generate_job_application_answer(
         formatted_content = format_response(
             result["content"],
             result.get("sources", []),
-            request.format or "text"
+            payload.format or "text"
         )
         
         converted_sources = convert_sources_to_dict(result.get("sources", []))
@@ -1148,7 +1148,7 @@ async def query_agent(
         formatted_content = format_response(
             result["content"],
             result.get("sources", []),
-            request.format or "text"
+            payload.format or "text"
         )
         
         converted_sources = convert_sources_to_dict(result.get("sources", []))
