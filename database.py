@@ -25,16 +25,34 @@ if DATABASE_URL.startswith("sqlite"):
         connect_args={"check_same_thread": False}
     )
 else:
-    pool_size = int(os.getenv("DATABASE_POOL_SIZE", "5"))
-    max_overflow = int(os.getenv("DATABASE_MAX_OVERFLOW", "10"))
-    pool_recycle = int(os.getenv("DATABASE_POOL_RECYCLE_SECONDS", "900"))
+    # PostgreSQL connection settings
+    # For Supabase pooler, use more conservative pool settings
+    pool_size = int(os.getenv("DATABASE_POOL_SIZE", "2"))  # Reduced from 5
+    max_overflow = int(os.getenv("DATABASE_MAX_OVERFLOW", "5"))  # Reduced from 10
+    pool_recycle = int(os.getenv("DATABASE_POOL_RECYCLE_SECONDS", "300"))  # 5 minutes
+    
+    # Connection arguments to prevent duplicate SASL authentication
+    connect_args = {
+        "connect_timeout": 10,
+        "application_name": "career-agent-api"
+    }
+    
+    # Add sslmode if not already in URL
+    if "sslmode" not in DATABASE_URL:
+        if "?" in DATABASE_URL:
+            DATABASE_URL = f"{DATABASE_URL}&sslmode=require"
+        else:
+            DATABASE_URL = f"{DATABASE_URL}?sslmode=require"
 
     engine = create_engine(
         DATABASE_URL,
-        pool_pre_ping=True,
+        pool_pre_ping=True,  # Verify connections before using
         pool_size=pool_size,
         max_overflow=max_overflow,
-        pool_recycle=pool_recycle
+        pool_recycle=pool_recycle,
+        pool_reset_on_return='commit',  # Reset connections on return
+        connect_args=connect_args,
+        echo=False  # Set to True for SQL debugging
     )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
