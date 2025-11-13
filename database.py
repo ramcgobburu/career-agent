@@ -3,9 +3,10 @@ Database models and setup for multi-tenant Career Agent
 """
 import os
 import secrets
+import json
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Tuple, List, Dict
+from typing import Optional, Tuple, List, Dict, Any
 
 from sqlalchemy import create_engine, Column, String, Text, DateTime, ForeignKey, Boolean, Integer
 from sqlalchemy.ext.declarative import declarative_base
@@ -59,6 +60,7 @@ class User(Base):
     # Relationships
     contexts = relationship("UserContext", back_populates="user", cascade="all, delete-orphan")
     usage_records = relationship("UsageRecord", back_populates="user", cascade="all, delete-orphan")
+    generated_documents = relationship("GeneratedDocument", back_populates="user", cascade="all, delete-orphan")
     
     def __repr__(self):
         return f"<User(id={self.id}, email={self.email}, tier={self.subscription_tier})>"
@@ -98,6 +100,24 @@ class UsageRecord(Base):
     
     def __repr__(self):
         return f"<UsageRecord(id={self.id}, user_id={self.user_id}, endpoint={self.endpoint}, created_at={self.created_at})>"
+
+
+class GeneratedDocument(Base):
+    """Persist generated outputs for users"""
+    __tablename__ = "generated_documents"
+
+    id = Column(String, primary_key=True, index=True)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
+    document_type = Column(String, nullable=False)  # cover-letter, blurb, job-application-answer, query
+    title = Column(String, nullable=True)
+    content = Column(Text, nullable=False)
+    metadata_json = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+
+    user = relationship("User", back_populates="generated_documents")
+
+    def __repr__(self):
+        return f"<GeneratedDocument(id={self.id}, user_id={self.user_id}, type={self.document_type})>"
 
 
 def generate_api_key() -> str:
@@ -220,6 +240,47 @@ def record_usage(db: Session, user_id: str, endpoint: str) -> UsageRecord:
     db.commit()
     db.refresh(usage_record)
     return usage_record
+
+
+def save_generated_document(
+    db: Session,
+    user_id: str,
+    document_type: str,
+    content: str,
+    title: Optional[str] = None,
+    metadata: Optional[Dict[str, Any]] = None
+) -> GeneratedDocument:
+    """Persist generated content for later retrieval."""
+    if not content or not content.strip():
+        raise ValueError("Generated content cannot be empty.")
+
+    doc_id = f"doc_{secrets.token_urlsafe(16)}"
+    metadata_json = json.dumps(metadata) if metadata else None
+
+    document = GeneratedDocument(
+        id=doc_id,
+        user_id=user_id,
+        document_type=document_type,
+        title=title,
+        content=content,
+        metadata_json=metadata_json,
+    )
+    db.add(document)
+    db.commit()
+    db.refresh(document)
+    return document
+
+
+def list_generated_documents(db: Session, user_id: str, limit: int = 50) -> List[GeneratedDocument]:
+    """Return recent generated documents for a user."""
+    limit = max(1, min(limit, 100))
+    return (
+        db.query(GeneratedDocument)
+        .filter(GeneratedDocument.user_id == user_id)
+        .order_by(GeneratedDocument.created_at.desc())
+        .limit(limit)
+        .all()
+    )
 
 
 def update_subscription(db: Session, user_id: str, tier: str, expires_at: Optional[datetime] = None) -> User:

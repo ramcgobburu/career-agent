@@ -7,7 +7,7 @@ const MENU_ITEMS = [
   { label: 'Generator', href: '/generator', icon: '⚡️' },
   { label: 'Account', href: '/account', icon: '👤' },
   { label: 'Subscription', href: '/subscription', icon: '💳' },
-  { label: 'Your docs', href: '#', icon: '🗂', disabled: true },
+  { label: 'Your docs', href: '/docs', icon: '🗂' },
   { label: 'Settings', href: '#', icon: '⚙️', disabled: true },
 ];
 

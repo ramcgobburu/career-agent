@@ -7,6 +7,7 @@ by Octan Labs
 import os
 import logging
 import tempfile
+import json
 from pathlib import Path
 from typing import Optional, List, Dict, Any
 from datetime import datetime, timedelta
@@ -51,7 +52,7 @@ from database import (
     record_usage, update_subscription, get_usage_limit_for_tier,
     get_user_by_email, list_user_contexts, delete_user_context,
     get_recent_usage_records, append_to_active_context, get_context_by_id,
-    get_usage_counts
+    get_usage_counts, save_generated_document, list_generated_documents
 )
 
 # Load environment variables
@@ -368,6 +369,21 @@ class AppendContextRequest(BaseModel):
         return v.strip()
 
 
+class GeneratedDocumentSummary(BaseModel):
+    id: str
+    document_type: str
+    title: Optional[str]
+    created_at: str
+    content: str
+    metadata: Optional[Dict[str, Any]] = None
+    preview: Optional[str] = None
+
+
+class DocumentsResponse(BaseModel):
+    contexts: List[UserContextSummary]
+    generated_documents: List[GeneratedDocumentSummary]
+
+
 def serialize_user_info(user: User) -> UserInfoResponse:
     """Helper to format user info responses consistently."""
     limit = get_usage_limit_for_tier(user.subscription_tier)
@@ -408,6 +424,29 @@ def serialize_usage_record(record) -> UsageRecordSummary:
         id=record.id,
         endpoint=record.endpoint,
         created_at=record.created_at.isoformat() if record.created_at else datetime.now().isoformat()
+    )
+
+
+def serialize_generated_document(document) -> GeneratedDocumentSummary:
+    """Convert a GeneratedDocument ORM object into an API-friendly payload."""
+    try:
+        metadata = json.loads(document.metadata_json) if document.metadata_json else None
+    except json.JSONDecodeError:
+        metadata = None
+
+    content = document.content or ""
+    preview = content.strip()[:200] if content else None
+    if preview and len(content.strip()) > 200:
+        preview = preview.rstrip() + "…"
+
+    return GeneratedDocumentSummary(
+        id=document.id,
+        document_type=document.document_type,
+        title=document.title,
+        created_at=document.created_at.isoformat() if document.created_at else datetime.now().isoformat(),
+        content=content,
+        metadata=metadata,
+        preview=preview
     )
 
 class SubscriptionRequest(BaseModel):
@@ -551,6 +590,7 @@ async def api_info():
             "list_contexts": "/api/v1/contexts",
             "delete_context": "/api/v1/contexts/{context_id}",
             "download_context": "/api/v1/contexts/{context_id}/download",
+            "documents": "/api/v1/documents",
             "subscribe": "/api/v1/subscribe",
             "cover_letter": "/api/v1/cover-letter",
             "blurb": "/api/v1/blurb",
@@ -723,6 +763,26 @@ async def get_user_contexts(
     contexts = list_user_contexts(db, user.id, limit=limit)
     return ContextListResponse(
         contexts=[serialize_context_summary(ctx) for ctx in contexts]
+    )
+
+
+@app.get("/api/v1/documents", response_model=DocumentsResponse)
+async def get_user_documents(
+    context_limit: int = 20,
+    generated_limit: int = 20,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Return uploaded contexts and recently generated documents for the user."""
+    context_limit = max(1, min(context_limit, 50))
+    generated_limit = max(1, min(generated_limit, 50))
+
+    contexts = list_user_contexts(db, user.id, limit=context_limit)
+    generated_docs = list_generated_documents(db, user.id, limit=generated_limit)
+
+    return DocumentsResponse(
+        contexts=[serialize_context_summary(ctx) for ctx in contexts],
+        generated_documents=[serialize_generated_document(doc) for doc in generated_docs]
     )
 
 
@@ -966,14 +1026,39 @@ async def generate_cover_letter(
         
         # Refresh user to get updated usage count
         db.refresh(user)
-        
+
+        converted_sources = convert_sources_to_dict(result.get("sources", []))
         formatted_content = format_response(
             result["content"],
             result.get("sources", []),
             payload.format or "text"
         )
+
+        title_parts = []
+        if payload.role_title:
+            title_parts.append(payload.role_title)
+        if payload.company_name:
+            title_parts.append(f"@ {payload.company_name}")
+        title = "Cover letter"
+        if title_parts:
+            title = f"Cover letter · {' '.join(title_parts)}"
+
+        save_generated_document(
+            db,
+            user_id=user.id,
+            document_type="cover-letter",
+            content=result.get("content", formatted_content),
+            title=title,
+            metadata={
+                "company_name": payload.company_name,
+                "role_title": payload.role_title,
+                "tone": payload.tone,
+                "length": payload.length,
+                "additional_context": bool(payload.additional_context),
+                "sources": converted_sources
+            }
+        )
         
-        converted_sources = convert_sources_to_dict(result.get("sources", []))
         limit = get_usage_limit_for_tier(user.subscription_tier)
         
         return ResponseModel(
@@ -1028,14 +1113,33 @@ async def generate_blurb(
         
         # Refresh user to get updated usage count
         db.refresh(user)
-        
+
+        converted_sources = convert_sources_to_dict(result.get("sources", []))
         formatted_content = format_response(
             result["content"],
             result.get("sources", []),
             payload.format or "text"
         )
+
+        title = f"Blurb · {payload.purpose}"
+        if payload.target_role:
+            title += f" for {payload.target_role}"
+
+        save_generated_document(
+            db,
+            user_id=user.id,
+            document_type="blurb",
+            content=result.get("content", formatted_content),
+            title=title,
+            metadata={
+                "purpose": payload.purpose,
+                "target_role": payload.target_role,
+                "max_words": payload.max_words,
+                "style": payload.style,
+                "sources": converted_sources
+            }
+        )
         
-        converted_sources = convert_sources_to_dict(result.get("sources", []))
         limit = get_usage_limit_for_tier(user.subscription_tier)
         
         return ResponseModel(
@@ -1089,14 +1193,37 @@ async def generate_job_application_answer(
         
         # Refresh user to get updated usage count
         db.refresh(user)
-        
+
+        converted_sources = convert_sources_to_dict(result.get("sources", []))
         formatted_content = format_response(
             result["content"],
             result.get("sources", []),
             payload.format or "text"
         )
+
+        title = "Application answer"
+        if payload.company_name or payload.role_title:
+            parts = []
+            if payload.role_title:
+                parts.append(payload.role_title)
+            if payload.company_name:
+                parts.append(f"@ {payload.company_name}")
+            title = f"Application answer · {' '.join(parts)}"
+
+        save_generated_document(
+            db,
+            user_id=user.id,
+            document_type="job-application-answer",
+            content=result.get("content", formatted_content),
+            title=title,
+            metadata={
+                "question": payload.question,
+                "company_name": payload.company_name,
+                "role_title": payload.role_title,
+                "sources": converted_sources
+            }
+        )
         
-        converted_sources = convert_sources_to_dict(result.get("sources", []))
         limit = get_usage_limit_for_tier(user.subscription_tier)
         
         return ResponseModel(
@@ -1144,14 +1271,31 @@ async def query_agent(
         
         # Refresh user to get updated usage count
         db.refresh(user)
-        
+
+        converted_sources = convert_sources_to_dict(result.get("sources", []))
         formatted_content = format_response(
             result["content"],
             result.get("sources", []),
             payload.format or "text"
         )
+
+        preview_question = payload.question.strip()
+        title = f"Query · {preview_question[:60]}" if preview_question else "Query response"
+        if preview_question and len(preview_question) > 60:
+            title += "…"
+
+        save_generated_document(
+            db,
+            user_id=user.id,
+            document_type="query",
+            content=result.get("content", formatted_content),
+            title=title,
+            metadata={
+                "question": payload.question,
+                "sources": converted_sources
+            }
+        )
         
-        converted_sources = convert_sources_to_dict(result.get("sources", []))
         limit = get_usage_limit_for_tier(user.subscription_tier)
         
         return ResponseModel(
