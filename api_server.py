@@ -69,8 +69,16 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Initialize database
-init_db()
+# Initialize database (with error handling to allow server to start)
+try:
+    init_db()
+except Exception as e:
+    logger.error(f"Database initialization failed: {e}")
+    logger.warning("⚠️  Server will start, but database operations may fail until connection is restored.")
+    logger.warning("   Please check:")
+    logger.warning("   1. DATABASE_URL is correct and password is URL-encoded")
+    logger.warning("   2. Database is not paused (free tier Supabase databases pause after inactivity)")
+    logger.warning("   3. Use Session Pooler (port 6543) for Render compatibility")
 
 # Initialize FastAPI app
 app = FastAPI(

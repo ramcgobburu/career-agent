@@ -140,9 +140,29 @@ def get_db() -> Session:
 
 
 def init_db():
-    """Initialize the database (create tables)"""
-    Base.metadata.create_all(bind=engine)
-    print("✅ Database initialized successfully!")
+    """Initialize the database (create tables) with retry logic"""
+    import time
+    max_retries = 3
+    retry_delay = 2
+    
+    for attempt in range(max_retries):
+        try:
+            Base.metadata.create_all(bind=engine)
+            print("✅ Database initialized successfully!")
+            return
+        except Exception as e:
+            if attempt < max_retries - 1:
+                print(f"⚠️  Database connection failed (attempt {attempt + 1}/{max_retries}): {e}")
+                print(f"   Retrying in {retry_delay} seconds...")
+                time.sleep(retry_delay)
+                retry_delay *= 2  # Exponential backoff
+            else:
+                # Don't raise - let the server start and handle DB errors at runtime
+                print(f"❌ Failed to initialize database after {max_retries} attempts: {e}")
+                print("⚠️  Server will start, but database operations may fail until connection is restored.")
+                print("   Check your DATABASE_URL and ensure the database is not paused.")
+                # Re-raise to let api_server.py handle it gracefully
+                raise
 
 
 def get_user_by_api_key(db: Session, api_key: str) -> Optional[User]:
