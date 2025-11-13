@@ -215,10 +215,10 @@ def get_user_by_email(db: Session, email: str) -> Optional[User]:
 def get_usage_limit_for_tier(tier: str) -> int:
     """Get the usage limit for a subscription tier"""
     limits = {
-        "free": 2,  # First 2 services free
+        "free": 3,  # First 3 requests for $0
         "premium": 999999  # Unlimited for premium
     }
-    return limits.get(tier, 2)
+    return limits.get(tier, 3)
 
 
 def can_user_make_request(user: User) -> Tuple[bool, str]:
