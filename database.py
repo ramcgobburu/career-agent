@@ -149,12 +149,28 @@ def generate_user_id() -> str:
 
 
 def get_db() -> Session:
-    """Dependency for getting database session"""
-    db = SessionLocal()
+    """Dependency for getting database session with error handling"""
+    db = None
     try:
+        db = SessionLocal()
         yield db
+    except Exception as e:
+        # Log the error but don't expose internal details
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Database connection error: {e}", exc_info=True)
+        if db:
+            try:
+                db.rollback()
+            except:
+                pass
+        raise
     finally:
-        db.close()
+        if db:
+            try:
+                db.close()
+            except:
+                pass
 
 
 def init_db():

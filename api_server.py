@@ -18,6 +18,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, Field, validator
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import OperationalError, DatabaseError
 import uvicorn
 
 # Try to import optional production dependencies
@@ -1324,6 +1325,32 @@ async def query_agent(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing query: {str(e)}")
 
+
+# Database exception handler
+@app.exception_handler(OperationalError)
+@app.exception_handler(DatabaseError)
+async def database_exception_handler(request: Request, exc: Exception):
+    """Handle database connection errors gracefully."""
+    logger.error(f"Database error: {exc}", exc_info=True, extra={
+        "path": request.url.path,
+        "method": request.method
+    })
+    
+    error_msg = str(exc).lower()
+    if "connection" in error_msg or "could not translate host" in error_msg:
+        detail = "Database connection failed. Please check your database configuration."
+    elif "authentication" in error_msg or "password" in error_msg:
+        detail = "Database authentication failed. Please check your credentials."
+    elif "paused" in error_msg:
+        detail = "Database is paused. Please restore it in your Supabase dashboard."
+    else:
+        detail = "Database error occurred. Please try again later."
+    
+    return JSONResponse(
+        status_code=503,  # Service Unavailable
+        content={"detail": detail, "error_type": "database_error"},
+        headers={"Access-Control-Allow-Origin": "*"}
+    )
 
 # Global exception handler
 @app.exception_handler(Exception)
