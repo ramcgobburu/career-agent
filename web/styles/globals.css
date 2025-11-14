@@ -1020,9 +1020,9 @@
   gap: 1rem;
   padding: 1.25rem;
   border-radius: 16px;
-  border: 1px solid #e2e8f0;
-  background: #f8fafc;
-  box-shadow: 0 14px 45px rgba(15, 23, 42, 0.05);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: rgba(15, 23, 42, 0.7);
+  box-shadow: 0 14px 45px rgba(8, 15, 32, 0.35);
 }
 
 .context-list__meta {
@@ -1034,7 +1034,7 @@
 
 .context-list__name {
   font-weight: 600;
-  color: rgba(241, 245, 249, 0.95);
+  color: rgba(224, 231, 255, 0.95);
 }
 
 .badge {
@@ -1056,7 +1056,7 @@
 }
 
 .context-list__preview {
-  color: rgba(203, 213, 225, 0.8);
+  color: rgba(226, 232, 240, 0.85);
   margin: 0 0 0.5rem;
   line-height: 1.5;
 }
@@ -1074,7 +1074,7 @@
 }
 
 .context-list__details {
-  color: rgba(148, 163, 184, 0.75);
+  color: rgba(203, 213, 225, 0.8);
   font-size: 0.9rem;
   margin: 0;
 }

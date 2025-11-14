@@ -446,49 +446,6 @@ export default function Dashboard({ user }) {
               {appendError && <p className="error">{appendError}</p>}
             </form>
 
-            <div className="panel-card__body">
-              {loadingContexts && <p className="muted">Loading contexts…</p>}
-              {contextsError && <p className="error">Unable to load contexts: {contextsError}</p>}
-              {!loadingContexts && !contextsError && contexts.length === 0 && (
-                <p className="muted">No contexts yet. Upload a file or paste text to get started.</p>
-              )}
-              {!loadingContexts && !contextsError && contexts.length > 0 && (
-                <ul className="context-list">
-                  {contexts.map((ctx) => (
-                    <li key={ctx.id} className="context-list__item">
-                      <div>
-                        <div className="context-list__meta">
-                          <span className="context-list__name">{ctx.file_name || 'Manual entry'}</span>
-                          {ctx.is_active && <span className="badge badge--active">Active</span>}
-                        </div>
-                        <p className="context-list__preview">{ctx.preview || 'No preview available.'}</p>
-                        <div className="context-list__links">
-                          <a
-                            href={ctx.download_url}
-                            className="link link--inline"
-                            target="_blank"
-                            rel="noreferrer"
-                          >
-                            Download context
-                          </a>
-                        </div>
-                        <p className="context-list__details">
-                          {formatTimestamp(ctx.uploaded_at)} · {ctx.character_count.toLocaleString()} characters
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        className="context-list__delete"
-                        onClick={() => handleDeleteContext(ctx.id)}
-                        disabled={deletingContextId === ctx.id}
-                      >
-                        {deletingContextId === ctx.id ? 'Deleting…' : 'Delete'}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
           </article>
 
           <article className="panel-card panel-card--usage">
