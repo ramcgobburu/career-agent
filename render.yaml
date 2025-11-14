@@ -10,8 +10,9 @@ services:
       - key: OPENAI_MODEL
         value: gpt-4o-mini
       - key: DATABASE_URL
-        value: sqlite:///./career_agent.db
-        # For PostgreSQL: value: postgresql://user:password@hostname:5432/dbname
+        sync: false
+        # Set in Render Dashboard > Environment
+        # See FIX_DATABASE_CONNECTION.md and env.production.example for details
     healthCheckPath: /health
     autoDeploy: true
 

@@ -822,6 +822,29 @@
   gap: 0.85rem;
 }
 
+.append-form textarea {
+  width: 100%;
+  padding: 1rem;
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  background: rgba(8, 14, 32, 0.65);
+  color: #f8fafc;
+  font-size: 1rem;
+  font-family: inherit;
+  resize: vertical;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.append-form textarea::placeholder {
+  color: rgba(148, 163, 184, 0.6);
+}
+
+.append-form textarea:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
+}
+
 .append-form__actions {
   display: flex;
   gap: 0.75rem;
@@ -950,7 +973,7 @@
 
 .input-group label {
   font-weight: 600;
-  color: #1f2937;
+  color: rgba(226, 232, 240, 0.92);
 }
 
 .input-group input[type='file'] {
@@ -961,13 +984,18 @@
   width: 100%;
   padding: 1rem;
   border-radius: 16px;
-  border: 1px solid #cbd5f5;
-  background: #f8fafc;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  background: rgba(8, 14, 32, 0.65);
+  color: #f8fafc;
   font-size: 1rem;
   font-family: inherit;
   resize: vertical;
   min-height: 160px;
   transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.context-form textarea::placeholder {
+  color: rgba(148, 163, 184, 0.6);
 }
 
 .context-form textarea:focus {

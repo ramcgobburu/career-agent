@@ -176,6 +176,7 @@ def get_db() -> Session:
 def init_db():
     """Initialize the database (create tables) with retry logic"""
     import time
+    from sqlalchemy.exc import OperationalError
     max_retries = 3
     retry_delay = 2
     
@@ -184,6 +185,40 @@ def init_db():
             Base.metadata.create_all(bind=engine)
             print("✅ Database initialized successfully!")
             return
+        except OperationalError as e:
+            error_msg = str(e)
+            if "password authentication failed" in error_msg.lower():
+                print(f"❌ Database password authentication failed!")
+                print("   This usually means:")
+                print("   1. The password in DATABASE_URL is incorrect")
+                print("   2. The password contains special characters that need URL-encoding")
+                print("   3. The username or connection string format is wrong")
+                print()
+                print("   To fix:")
+                print("   1. Get your password from Supabase Dashboard > Settings > Database")
+                print("   2. Run: python encode_db_password.py")
+                print("   3. Or manually URL-encode special characters:")
+                print("      @ -> %40, # -> %23, / -> %2F, : -> %3A, etc.")
+                print("   4. Update DATABASE_URL in Render with the encoded password")
+                print()
+                print(f"   Connection string format:")
+                print(f"   postgresql://username:ENCODED_PASSWORD@host:port/database?sslmode=require")
+            elif "could not connect" in error_msg.lower() or "connection refused" in error_msg.lower():
+                print(f"⚠️  Database connection failed (attempt {attempt + 1}/{max_retries}): {e}")
+                print("   Check that:")
+                print("   1. The database host and port are correct")
+                print("   2. The database is not paused (Supabase)")
+                print("   3. Your IP is allowed (if using IP restrictions)")
+            else:
+                print(f"⚠️  Database connection failed (attempt {attempt + 1}/{max_retries}): {e}")
+            
+            if attempt < max_retries - 1:
+                print(f"   Retrying in {retry_delay} seconds...")
+                time.sleep(retry_delay)
+                retry_delay *= 2  # Exponential backoff
+            else:
+                print("⚠️  Server will start, but database operations may fail until connection is restored.")
+                raise
         except Exception as e:
             if attempt < max_retries - 1:
                 print(f"⚠️  Database connection failed (attempt {attempt + 1}/{max_retries}): {e}")
