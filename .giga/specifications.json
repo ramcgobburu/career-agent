@@ -1,0 +1,22 @@
+[
+  {
+    "fileName": "main-overview.mdc",
+    "description": "Complete system overview covering the career-focused RAG architecture, multi-tenant design, and core components interaction"
+  },
+  {
+    "fileName": "career-processing-algorithms.mdc",
+    "description": "Detailed documentation of specialized career document processing algorithms, including custom chunking strategies, context preservation methods, and retrieval optimization"
+  },
+  {
+    "fileName": "data-models-context.mdc",
+    "description": "Comprehensive documentation of data models for career context management, including vector store structure, user context isolation, and version management"
+  },
+  {
+    "fileName": "generation-pipeline.mdc",
+    "description": "Detailed documentation of the career material generation pipeline, including prompt engineering strategies, document type handling, and professional voice maintenance"
+  },
+  {
+    "fileName": "data-flow-architecture.mdc",
+    "description": "Documentation of data flow between components, focusing on multi-tenant context management, career document processing pipeline, and retrieval system integration"
+  }
+]

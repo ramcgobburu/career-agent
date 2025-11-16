@@ -65,3 +65,15 @@ htmlcov/
 
 # Deployment
 .vercel
+
+# Node / Next.js
+node_modules/
+.next/
+web/node_modules/
+web/.next/
+web/.env.local
+web/.env.*
+
+# Secrets
+credentials/
+secrets/
