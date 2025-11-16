@@ -65,6 +65,17 @@ if cors_origins == "*":
 else:
     allowed_origins = [origin.strip() for origin in cors_origins.split(",")]
 
+# Always allow the frontend domains
+frontend_domains = [
+    "https://careerpilotconsulting.com",
+    "https://www.careerpilotconsulting.com",
+    "http://localhost:3000",
+    "http://localhost:3001"
+]
+for domain in frontend_domains:
+    if domain not in allowed_origins:
+        allowed_origins.append(domain)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
@@ -715,12 +726,17 @@ async def create_checkout_session(
             url=checkout_session.url
         )
     
-    except stripe.error.StripeError as e:
-        logger.error(f"Stripe error creating checkout session: {e}")
-        raise HTTPException(
-            status_code=400,
-            detail=f"Payment processing error: {str(e)}"
-        )
+    except Exception as e:
+        # Check if it's a Stripe error
+        error_type = type(e).__name__
+        if "Stripe" in error_type or "stripe" in str(type(e)).lower():
+            logger.error(f"Stripe error creating checkout session: {e}")
+            raise HTTPException(
+                status_code=400,
+                detail=f"Payment processing error: {str(e)}"
+            )
+        # Re-raise to be caught by outer exception handler
+        raise
     except Exception as e:
         logger.error(f"Error creating checkout session: {e}", exc_info=True)
         raise HTTPException(
