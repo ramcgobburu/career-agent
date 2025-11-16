@@ -32,7 +32,7 @@ except ImportError:
 
 from career_agent import CareerAgent
 from database import (
-    get_db, init_db, get_user_by_api_key, get_active_context_for_user,
+    get_db, init_db, get_user_by_api_key, get_user_by_email, get_active_context_for_user,
     create_user, save_user_context, User, update_subscription, get_usage_limit_for_tier
 )
 
