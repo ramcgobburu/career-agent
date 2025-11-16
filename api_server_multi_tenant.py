@@ -141,37 +141,37 @@ async def get_current_user_from_header(
         # Try to verify Supabase token and get user
         try:
             # Import Supabase if available
-            try:
-                from supabase import create_client, Client
-                supabase_url = os.getenv("SUPABASE_URL")
-                supabase_key = os.getenv("SUPABASE_ANON_KEY") or os.getenv("SUPABASE_SERVICE_ROLE_KEY")
-                
-                if supabase_url and supabase_key:
-                    supabase: Client = create_client(supabase_url, supabase_key)
-                    # Verify token and get user
-                    user_response = supabase.auth.get_user(token)
-                    if user_response and user_response.user:
-                        supabase_user = user_response.user
-                        email = supabase_user.email
-                        
-                        # Get or create user in our database
-                        user = get_user_by_email(db, email)
-                        if not user:
-                            # Create user from Supabase info
-                            from database import create_user
-                            user = create_user(
-                                db=db,
-                                email=email,
-                                name=supabase_user.user_metadata.get("name") or supabase_user.email.split("@")[0],
-                                user_id=supabase_user.id
-                            )
-                        return user
-            except ImportError:
-                pass  # Supabase not installed
-            except Exception as e:
-                logger.warning(f"Supabase token verification failed: {e}")
-                # Fall through to try token as API key
-                pass
+            from supabase import create_client, Client
+            supabase_url = os.getenv("SUPABASE_URL")
+            supabase_key = os.getenv("SUPABASE_ANON_KEY") or os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+            
+            if supabase_url and supabase_key:
+                supabase: Client = create_client(supabase_url, supabase_key)
+                # Verify token and get user
+                user_response = supabase.auth.get_user(token)
+                if user_response and user_response.user:
+                    supabase_user = user_response.user
+                    email = supabase_user.email
+                    
+                    # Get or create user in our database
+                    user = get_user_by_email(db, email)
+                    if not user:
+                        # Create user from Supabase info
+                        from database import create_user
+                        user = create_user(
+                            db=db,
+                            email=email,
+                            name=supabase_user.user_metadata.get("name") or supabase_user.email.split("@")[0],
+                            user_id=supabase_user.id
+                        )
+                    return user
+        except ImportError:
+            # Supabase not installed, fall through to try token as API key
+            pass
+        except Exception as e:
+            logger.warning(f"Supabase token verification failed: {e}")
+            # Fall through to try token as API key
+            pass
         
         # If Supabase verification failed, try token as API key (backward compatibility)
         user = get_user_by_api_key(db, token)
