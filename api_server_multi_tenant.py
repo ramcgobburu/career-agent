@@ -105,13 +105,31 @@ async def get_current_user(
 
 # Alternative dependency for API key in header
 async def get_current_user_from_header(
-    x_api_key: Optional[str] = Header(None),
+    x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
+    authorization: Optional[str] = Header(None),
     db: Session = Depends(get_db)
 ) -> User:
-    """Get current user from X-API-Key header"""
-    if not x_api_key:
-        raise HTTPException(status_code=401, detail="API key required. Provide X-API-Key header or Authorization Bearer token")
-    user = get_user_by_api_key(db, x_api_key)
+    """Get current user from X-API-Key header or Authorization Bearer token"""
+    api_key = None
+    
+    # Check X-API-Key header first
+    if x_api_key:
+        api_key = x_api_key
+    # Check Authorization Bearer token
+    elif authorization:
+        if authorization.startswith("Bearer "):
+            api_key = authorization.replace("Bearer ", "").strip()
+        else:
+            # If it's not Bearer, treat the whole value as API key
+            api_key = authorization.strip()
+    
+    if not api_key:
+        raise HTTPException(
+            status_code=401, 
+            detail="API key required. Provide X-API-Key header or Authorization Bearer token"
+        )
+    
+    user = get_user_by_api_key(db, api_key)
     if not user:
         raise HTTPException(status_code=401, detail="Invalid API key")
     return user
