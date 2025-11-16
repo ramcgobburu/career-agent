@@ -5,21 +5,33 @@ Supports user provisioning and context uploads for OpenAI Marketplace
 
 import os
 import tempfile
+import logging
 from pathlib import Path
 from typing import Optional, List, Dict, Any
+from datetime import datetime, timedelta
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Depends, Header, UploadFile, File, Form
+from fastapi import FastAPI, HTTPException, Depends, Header, UploadFile, File, Form, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
+# Try to import Stripe
+try:
+    import stripe
+    STRIPE_AVAILABLE = True
+except ImportError:
+    STRIPE_AVAILABLE = False
+    stripe = None
+
 from career_agent import CareerAgent
 from database import (
     get_db, init_db, get_user_by_api_key, get_active_context_for_user,
-    create_user, save_user_context, User
+    create_user, save_user_context, User, update_subscription, get_usage_limit_for_tier
 )
+
+logger = logging.getLogger(__name__)
 
 # Load environment variables
 load_dotenv()
@@ -60,6 +72,16 @@ security = HTTPBearer()
 
 # Agent cache (per-user agents)
 agent_cache: Dict[str, CareerAgent] = {}
+
+# Stripe configuration
+if STRIPE_AVAILABLE:
+    stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
+    STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET")
+    if not stripe.api_key:
+        logger.warning("STRIPE_SECRET_KEY not set. Subscription features will be disabled.")
+else:
+    logger.warning("Stripe not installed. Install with: pip install stripe")
+    STRIPE_WEBHOOK_SECRET = None
 
 
 # Dependency to get current user
@@ -534,6 +556,290 @@ async def query_agent(
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing query: {str(e)}")
+
+
+# Subscription Models
+class CreateCheckoutSessionRequest(BaseModel):
+    price_id: str = Field(..., description="Stripe Price ID for the subscription plan")
+    success_url: Optional[str] = Field(None, description="URL to redirect after successful payment")
+    cancel_url: Optional[str] = Field(None, description="URL to redirect after cancelled payment")
+
+class CheckoutSessionResponse(BaseModel):
+    session_id: str
+    url: str
+
+class SubscriptionStatusResponse(BaseModel):
+    subscription_tier: str
+    subscription_status: str
+    subscription_expires_at: Optional[str]
+    requests_used: int
+    requests_limit: int
+    stripe_customer_id: Optional[str] = None
+    stripe_subscription_id: Optional[str] = None
+
+
+# Subscription Endpoints
+@app.post("/api/v1/create-checkout-session", response_model=CheckoutSessionResponse)
+async def create_checkout_session(
+    request: CreateCheckoutSessionRequest,
+    user: User = Depends(get_current_user_from_header),
+    db: Session = Depends(get_db)
+):
+    """Create a Stripe Checkout Session for subscription."""
+    if not STRIPE_AVAILABLE or not stripe.api_key:
+        raise HTTPException(
+            status_code=503,
+            detail="Payment processing not configured. Please contact support."
+        )
+    
+    try:
+        # Get base URL from environment or request
+        base_url = os.getenv("FRONTEND_URL", "https://careerpilotconsulting.com")
+        success_url = request.success_url or f"{base_url}/subscription?success=true"
+        cancel_url = request.cancel_url or f"{base_url}/subscription?canceled=true"
+        
+        # Create or retrieve Stripe customer
+        customer_email = user.email
+        if not customer_email:
+            raise HTTPException(
+                status_code=400,
+                detail="User email is required for subscription. Please update your profile."
+            )
+        
+        # Try to find existing customer by email
+        customers = stripe.Customer.list(email=customer_email, limit=1)
+        if customers.data:
+            customer_id = customers.data[0].id
+        else:
+            # Create new customer
+            customer = stripe.Customer.create(
+                email=customer_email,
+                name=user.name,
+                metadata={"user_id": user.id}
+            )
+            customer_id = customer.id
+        
+        # Create checkout session
+        checkout_session = stripe.checkout.Session.create(
+            customer=customer_id,
+            payment_method_types=["card"],
+            line_items=[
+                {
+                    "price": request.price_id,
+                    "quantity": 1,
+                }
+            ],
+            mode="subscription",
+            success_url=success_url,
+            cancel_url=cancel_url,
+            metadata={
+                "user_id": user.id,
+                "user_email": customer_email
+            },
+            allow_promotion_codes=True,
+        )
+        
+        return CheckoutSessionResponse(
+            session_id=checkout_session.id,
+            url=checkout_session.url
+        )
+    
+    except stripe.error.StripeError as e:
+        logger.error(f"Stripe error creating checkout session: {e}")
+        raise HTTPException(
+            status_code=400,
+            detail=f"Payment processing error: {str(e)}"
+        )
+    except Exception as e:
+        logger.error(f"Error creating checkout session: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error creating checkout session: {str(e)}"
+        )
+
+
+@app.get("/api/v1/subscription-status", response_model=SubscriptionStatusResponse)
+async def get_subscription_status(
+    user: User = Depends(get_current_user_from_header),
+    db: Session = Depends(get_db)
+):
+    """Get current subscription status for the user."""
+    limit = get_usage_limit_for_tier(user.subscription_tier)
+    
+    expires_at_str = None
+    if user.subscription_expires_at:
+        expires_at_str = user.subscription_expires_at.isoformat()
+    
+    # Try to get Stripe subscription info if available
+    stripe_customer_id = None
+    stripe_subscription_id = None
+    
+    if STRIPE_AVAILABLE and stripe.api_key and user.email:
+        try:
+            customers = stripe.Customer.list(email=user.email, limit=1)
+            if customers.data:
+                customer = customers.data[0]
+                stripe_customer_id = customer.id
+                
+                # Get active subscriptions
+                subscriptions = stripe.Subscription.list(
+                    customer=customer.id,
+                    status="active",
+                    limit=1
+                )
+                if subscriptions.data:
+                    stripe_subscription_id = subscriptions.data[0].id
+        except Exception as e:
+            logger.warning(f"Could not fetch Stripe subscription info: {e}")
+    
+    return SubscriptionStatusResponse(
+        subscription_tier=user.subscription_tier,
+        subscription_status=user.subscription_status,
+        subscription_expires_at=expires_at_str,
+        requests_used=user.requests_used,
+        requests_limit=limit,
+        stripe_customer_id=stripe_customer_id,
+        stripe_subscription_id=stripe_subscription_id
+    )
+
+
+@app.post("/api/v1/webhooks/stripe")
+async def stripe_webhook(request: Request):
+    """Handle Stripe webhook events for subscription management."""
+    if not STRIPE_AVAILABLE or not STRIPE_WEBHOOK_SECRET:
+        raise HTTPException(status_code=503, detail="Webhook secret not configured")
+    
+    payload = await request.body()
+    sig_header = request.headers.get("stripe-signature")
+    
+    if not sig_header:
+        raise HTTPException(status_code=400, detail="Missing stripe-signature header")
+    
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, STRIPE_WEBHOOK_SECRET
+        )
+    except ValueError as e:
+        logger.error(f"Invalid payload: {e}")
+        raise HTTPException(status_code=400, detail="Invalid payload")
+    except stripe.error.SignatureVerificationError as e:
+        logger.error(f"Invalid signature: {e}")
+        raise HTTPException(status_code=400, detail="Invalid signature")
+    
+    # Handle webhook events
+    event_type = event["type"]
+    event_data = event["data"]["object"]
+    
+    logger.info(f"Received Stripe webhook: {event_type}")
+    
+    db = next(get_db())
+    
+    try:
+        if event_type == "checkout.session.completed":
+            # Payment succeeded - upgrade subscription
+            session = event_data
+            user_id = session.get("metadata", {}).get("user_id")
+            customer_email = session.get("customer_email") or session.get("customer_details", {}).get("email")
+            
+            if user_id:
+                # Find user by ID
+                user = db.query(User).filter(User.id == user_id).first()
+            elif customer_email:
+                # Find user by email
+                from database import get_user_by_email
+                user = get_user_by_email(db, customer_email)
+            else:
+                logger.warning("No user_id or email in checkout session")
+                return {"status": "ok"}
+            
+            if user:
+                # Set subscription to premium with 30 days expiration
+                expires_at = datetime.now() + timedelta(days=30)
+                update_subscription(db, user.id, "premium", expires_at)
+                logger.info(f"Upgraded user {user.id} to premium via webhook")
+            else:
+                logger.warning(f"User not found for checkout session: {user_id or customer_email}")
+        
+        elif event_type == "customer.subscription.created":
+            # New subscription created
+            subscription = event_data
+            customer_id = subscription.get("customer")
+            
+            if customer_id:
+                customer = stripe.Customer.retrieve(customer_id)
+                customer_email = customer.email
+                
+                if customer_email:
+                    from database import get_user_by_email
+                    user = get_user_by_email(db, customer_email)
+                    if user:
+                        expires_at = datetime.fromtimestamp(subscription.get("current_period_end", 0))
+                        update_subscription(db, user.id, "premium", expires_at)
+                        logger.info(f"Subscription created for user {user.id}")
+        
+        elif event_type == "customer.subscription.updated":
+            # Subscription updated (renewed, changed, etc.)
+            subscription = event_data
+            customer_id = subscription.get("customer")
+            status = subscription.get("status")
+            
+            if customer_id:
+                customer = stripe.Customer.retrieve(customer_id)
+                customer_email = customer.email
+                
+                if customer_email:
+                    from database import get_user_by_email
+                    user = get_user_by_email(db, customer_email)
+                    if user:
+                        if status in ["active", "trialing"]:
+                            expires_at = datetime.fromtimestamp(subscription.get("current_period_end", 0))
+                            update_subscription(db, user.id, "premium", expires_at)
+                            logger.info(f"Subscription updated for user {user.id}")
+                        elif status in ["canceled", "unpaid", "past_due"]:
+                            # Downgrade to free
+                            update_subscription(db, user.id, "free", None)
+                            logger.info(f"Subscription canceled for user {user.id}")
+        
+        elif event_type == "customer.subscription.deleted":
+            # Subscription cancelled
+            subscription = event_data
+            customer_id = subscription.get("customer")
+            
+            if customer_id:
+                customer = stripe.Customer.retrieve(customer_id)
+                customer_email = customer.email
+                
+                if customer_email:
+                    from database import get_user_by_email
+                    user = get_user_by_email(db, customer_email)
+                    if user:
+                        update_subscription(db, user.id, "free", None)
+                        logger.info(f"Subscription deleted for user {user.id}")
+        
+        elif event_type == "invoice.payment_failed":
+            # Payment failed
+            invoice = event_data
+            customer_id = invoice.get("customer")
+            
+            if customer_id:
+                customer = stripe.Customer.retrieve(customer_id)
+                customer_email = customer.email
+                
+                if customer_email:
+                    from database import get_user_by_email
+                    user = get_user_by_email(db, customer_email)
+                    if user:
+                        logger.warning(f"Payment failed for user {user.id}")
+                        # Optionally downgrade or mark subscription as expired
+                        # For now, just log it
+        
+        return {"status": "success"}
+    
+    except Exception as e:
+        logger.error(f"Error processing webhook: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Error processing webhook")
+    finally:
+        db.close()
 
 
 if __name__ == "__main__":
