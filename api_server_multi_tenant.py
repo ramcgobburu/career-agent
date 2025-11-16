@@ -842,6 +842,24 @@ async def stripe_webhook(request: Request):
         db.close()
 
 
+# Log registered routes on startup
+@app.on_event("startup")
+async def log_routes():
+    """Log all registered routes for debugging."""
+    routes = []
+    for route in app.routes:
+        if hasattr(route, 'path') and hasattr(route, 'methods'):
+            method = list(route.methods)[0] if route.methods else 'GET'
+            routes.append(f"{method} {route.path}")
+    
+    logger.info(f"✅ Registered {len(routes)} routes")
+    subscription_routes = [r for r in routes if 'subscription' in r.lower() or 'checkout' in r.lower()]
+    if subscription_routes:
+        logger.info(f"✅ Subscription routes: {', '.join(subscription_routes)}")
+    else:
+        logger.warning("⚠️  No subscription routes found!")
+
+
 if __name__ == "__main__":
     import uvicorn
     host = os.getenv("HOST", "0.0.0.0")
