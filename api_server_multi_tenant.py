@@ -3,6 +3,11 @@ Multi-tenant FastAPI Backend Server for Career Agent
 Supports user provisioning and context uploads for OpenAI Marketplace
 """
 
+# Force immediate output for debugging
+import sys
+sys.stdout.flush()
+print("🚀 MODULE LOADING: api_server_multi_tenant.py", flush=True)
+
 import os
 import tempfile
 import logging
@@ -40,6 +45,7 @@ load_dotenv()
 init_db()
 
 # Initialize FastAPI app
+print("🚀 Creating FastAPI app...", flush=True)
 app = FastAPI(
     title="Career Agent API - Multi-Tenant",
     description="AI-powered career materials generator API with user provisioning",
