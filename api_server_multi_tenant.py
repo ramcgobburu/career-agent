@@ -729,15 +729,20 @@ async def create_checkout_session(
     except Exception as e:
         # Check if it's a Stripe error
         error_type = type(e).__name__
-        if "Stripe" in error_type or "stripe" in str(type(e)).lower():
+        error_str = str(type(e)).lower()
+        if "Stripe" in error_type or "stripe" in error_str or "AuthenticationError" in error_type:
             logger.error(f"Stripe error creating checkout session: {e}")
+            error_message = str(e)
+            if "Invalid API Key" in error_message:
+                raise HTTPException(
+                    status_code=503,
+                    detail="Payment processing not configured correctly. Please contact support."
+                )
             raise HTTPException(
                 status_code=400,
-                detail=f"Payment processing error: {str(e)}"
+                detail=f"Payment processing error: {error_message}"
             )
-        # Re-raise to be caught by outer exception handler
-        raise
-    except Exception as e:
+        # Generic error handler
         logger.error(f"Error creating checkout session: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
@@ -810,9 +815,14 @@ async def stripe_webhook(request: Request):
     except ValueError as e:
         logger.error(f"Invalid payload: {e}")
         raise HTTPException(status_code=400, detail="Invalid payload")
-    except stripe.error.SignatureVerificationError as e:
-        logger.error(f"Invalid signature: {e}")
-        raise HTTPException(status_code=400, detail="Invalid signature")
+    except Exception as e:
+        # Check if it's a Stripe signature verification error
+        error_type = type(e).__name__
+        if "SignatureVerificationError" in error_type or "stripe" in str(type(e)).lower():
+            logger.error(f"Invalid signature: {e}")
+            raise HTTPException(status_code=400, detail="Invalid signature")
+        # Re-raise other exceptions
+        raise
     
     # Handle webhook events
     event_type = event["type"]
