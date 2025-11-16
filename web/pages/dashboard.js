@@ -47,6 +47,10 @@ export default function Dashboard({ user }) {
     if (window.location.hostname === 'localhost') {
       return 'http://localhost:8000';
     }
+    // Use API subdomain for production
+    if (window.location.hostname === 'careerpilotconsulting.com' || window.location.hostname === 'www.careerpilotconsulting.com') {
+      return 'https://api.careerpilotconsulting.com';
+    }
     return `${window.location.origin}`;
   }, []);
 
