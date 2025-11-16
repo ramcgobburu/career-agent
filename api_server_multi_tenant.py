@@ -579,6 +579,7 @@ class SubscriptionStatusResponse(BaseModel):
 
 
 # Subscription Endpoints
+print("🔍 DEBUG: About to define subscription routes...")
 @app.post("/api/v1/create-checkout-session", response_model=CheckoutSessionResponse)
 async def create_checkout_session(
     request: CreateCheckoutSessionRequest,
@@ -658,6 +659,7 @@ async def create_checkout_session(
         )
 
 
+print("🔍 DEBUG: About to define subscription-status route...")
 @app.get("/api/v1/subscription-status", response_model=SubscriptionStatusResponse)
 async def get_subscription_status(
     user: User = Depends(get_current_user_from_header),
@@ -842,7 +844,7 @@ async def stripe_webhook(request: Request):
         db.close()
 
 
-# Log registered routes on startup
+# Log registered routes on startup - using print for visibility
 @app.on_event("startup")
 async def log_routes():
     """Log all registered routes for debugging."""
@@ -852,12 +854,21 @@ async def log_routes():
             method = list(route.methods)[0] if route.methods else 'GET'
             routes.append(f"{method} {route.path}")
     
+    print(f"✅ Registered {len(routes)} routes")
     logger.info(f"✅ Registered {len(routes)} routes")
     subscription_routes = [r for r in routes if 'subscription' in r.lower() or 'checkout' in r.lower()]
     if subscription_routes:
+        print(f"✅ Subscription routes: {', '.join(subscription_routes)}")
         logger.info(f"✅ Subscription routes: {', '.join(subscription_routes)}")
     else:
+        print("⚠️  No subscription routes found!")
         logger.warning("⚠️  No subscription routes found!")
+    
+    # Also print all /api/v1 routes for debugging
+    api_routes = [r for r in routes if '/api/v1' in r]
+    print(f"📋 All /api/v1 routes ({len(api_routes)}):")
+    for r in sorted(api_routes):
+        print(f"   {r}")
 
 
 if __name__ == "__main__":
