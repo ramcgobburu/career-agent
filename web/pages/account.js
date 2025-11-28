@@ -1,4 +1,5 @@
 import Head from 'next/head';
+import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useSupabaseClient, useSession } from '@supabase/auth-helpers-react';
@@ -286,14 +287,13 @@ export default function Account({ user }) {
           </div>
 
           <div className="account__panel">
-            <h2>Manage subscription</h2>
+            <h2>Subscription & billing</h2>
             <p className="muted">
-              Billing is coming soon. You’ll be able to upgrade, manage payment details, and download invoices right
-              from this space.
+              Manage your subscription, upgrade your plan, and view billing details.
             </p>
-            <button type="button" className="ghost ghost--bright" disabled>
-              Upgrade (coming soon)
-            </button>
+            <Link href="/subscription" className="ghost ghost--bright">
+              Go to subscription page →
+            </Link>
           </div>
         </section>
       </main>
