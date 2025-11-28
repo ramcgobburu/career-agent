@@ -554,7 +554,7 @@ export default function Dashboard({ user }) {
               <Link href="/generator" className="cta">
                 Open generator
               </Link>
-              <p className="muted">We’ll pull your latest context automatically during each session.</p>
+              <p className="muted">We'll pull your latest context automatically during each session.</p>
             </div>
             <div className="next-prompts">
               <h3>Try these prompts next</h3>
@@ -566,6 +566,39 @@ export default function Dashboard({ user }) {
                   </li>
                 ))}
               </ul>
+            </div>
+          </article>
+
+          <article className="panel-card panel-card--video">
+            <div className="panel-card__header">
+              <div>
+                <h2>
+                  <span style={{ marginRight: '0.5rem', fontSize: '1.5rem' }}>🎥</span>
+                  How to make better use of this tool
+                </h2>
+                <p>Watch our demo video to learn best practices and unlock the full potential of CareerPilot.</p>
+              </div>
+            </div>
+            <div className="panel-card__actions">
+              <a 
+                href="https://www.youtube.com/watch?v=YOUR_VIDEO_ID" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="cta"
+                style={{ 
+                  display: 'inline-flex', 
+                  alignItems: 'center', 
+                  gap: '0.5rem', 
+                  textDecoration: 'none',
+                  width: 'fit-content'
+                }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0 }}>
+                  <path d="M8 5v14l11-7z"/>
+                </svg>
+                Watch Demo Video
+              </a>
+              <p className="muted">Learn how to upload context, generate materials, and optimize your LinkedIn profile.</p>
             </div>
           </article>
         </section>
