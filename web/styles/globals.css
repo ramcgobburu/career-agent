@@ -2022,7 +2022,7 @@ input, textarea, select {
 .plan-card__cta {
   margin-top: auto;
   align-self: flex-start;
-  background: #0ea5e9;
+  background: #10b981;
   border: none;
   color: #ffffff;
   font-weight: 500;
@@ -2035,7 +2035,7 @@ input, textarea, select {
 }
 
 .plan-card__cta:hover:not(.disabled) {
-  background: #0284c7;
+  background: #059669;
 }
 
 .plan-card__cta.disabled {
