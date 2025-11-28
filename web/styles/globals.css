@@ -213,7 +213,7 @@
 }
 
 .install-prompt__install {
-  background: #0ea5e9;
+  background: #10b981;
   color: #ffffff;
   border: none;
   padding: 0.5rem 1rem;
@@ -225,7 +225,7 @@
 }
 
 .install-prompt__install:hover {
-  background: #0284c7;
+  background: #059669;
 }
 
 .install-prompt__dismiss {
@@ -472,9 +472,9 @@ input, textarea, select {
 }
 
 .auth-card__tabs button.active {
-  background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%);
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: #f8fafc;
-  box-shadow: 0 12px 30px rgba(99, 102, 241, 0.35);
+  box-shadow: 0 12px 30px rgba(16, 185, 129, 0.25);
 }
 
 .auth-card__form {
@@ -830,9 +830,9 @@ input, textarea, select {
 }
 
 .ghost--bright {
-  background: rgba(14, 165, 233, 0.1);
-  border: 1px solid rgba(14, 165, 233, 0.3);
-  color: #0ea5e9;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #059669;
 }
 
 .ghost--muted {
@@ -845,15 +845,15 @@ input, textarea, select {
 
 .badge--plan {
   width: fit-content;
-  background: rgba(14, 165, 233, 0.1);
-  border: 1px solid rgba(14, 165, 233, 0.3);
-  color: #0ea5e9;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #059669;
 }
 
 .dashboard__usage-bar {
   width: 100%;
   height: 12px;
-  background: rgba(99, 102, 241, 0.15);
+  background: rgba(16, 185, 129, 0.15);
   border-radius: 999px;
   overflow: hidden;
   position: relative;
@@ -861,10 +861,10 @@ input, textarea, select {
 
 .dashboard__usage-progress {
   height: 100%;
-  background: linear-gradient(135deg, #22d3ee 0%, #6366f1 100%);
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   border-radius: inherit;
   transition: width 200ms ease;
-  box-shadow: 0 0 25px rgba(99, 102, 241, 0.35);
+  box-shadow: 0 0 25px rgba(16, 185, 129, 0.25);
 }
 
 .dashboard__highlights {
@@ -918,7 +918,7 @@ input, textarea, select {
 .highlight-card__metric {
   margin-top: auto;
   font-weight: 600;
-  color: #0ea5e9;
+  color: #059669;
   font-size: 1.05rem;
 }
 
@@ -933,11 +933,11 @@ input, textarea, select {
 }
 
 .highlight-card__icon--context {
-  background: rgba(14, 165, 233, 0.1);
+  background: rgba(16, 185, 129, 0.1);
 }
 
 .highlight-card__icon--usage {
-  background: rgba(14, 165, 233, 0.1);
+  background: rgba(16, 185, 129, 0.1);
 }
 
 .highlight-card__icon--streak {
@@ -1629,9 +1629,9 @@ input, textarea, select {
   gap: 0.5rem;
   padding: 0.4rem 0.85rem;
   border-radius: 6px;
-  background: rgba(14, 165, 233, 0.08);
-  border: 1px solid rgba(14, 165, 233, 0.2);
-  color: #0ea5e9;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  color: #059669;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-size: 0.75rem;
@@ -1927,9 +1927,9 @@ input, textarea, select {
   gap: 0.5rem;
   padding: 0.4rem 0.85rem;
   border-radius: 6px;
-  background: rgba(14, 165, 233, 0.08);
-  border: 1px solid rgba(14, 165, 233, 0.2);
-  color: #0ea5e9;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  color: #059669;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-size: 0.75rem;
