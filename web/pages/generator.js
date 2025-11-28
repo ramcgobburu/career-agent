@@ -473,19 +473,7 @@ export default function Generator({ user }) {
             {renderModeSpecificFields()}
 
             {errorMessage && (
-              <div style={{ 
-                color: '#dc2626',
-                backgroundColor: '#fef2f2',
-                border: '2px solid #dc2626',
-                padding: '1rem',
-                borderRadius: '0.5rem',
-                marginTop: '1rem',
-                marginBottom: '1rem',
-                fontSize: '0.95rem',
-                lineHeight: '1.5',
-                fontWeight: '500',
-                display: 'block'
-              }}>
+              <div className="generator__error-message">
                 {errorMessage}
               </div>
             )}
