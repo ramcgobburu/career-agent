@@ -65,6 +65,9 @@ export default function Generator({ user }) {
   const [blurbStyle, setBlurbStyle] = useState('linkedin');
   const [maxWords, setMaxWords] = useState(200);
   const [question, setQuestion] = useState('');
+  const [jobUrl, setJobUrl] = useState('');
+  const [parsingUrl, setParsingUrl] = useState(false);
+  const [urlError, setUrlError] = useState(null);
 
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState(null);
@@ -304,6 +307,58 @@ export default function Generator({ user }) {
     }
   };
 
+  const handleParseJobUrl = async () => {
+    if (!jobUrl.trim()) {
+      setUrlError('Please enter a job posting URL');
+      return;
+    }
+
+    if (!apiBaseUrl || !accessToken) {
+      setUrlError('You need to be signed in to parse job URLs');
+      return;
+    }
+
+    setParsingUrl(true);
+    setUrlError(null);
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/v1/parse-job-url`, {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({ url: jobUrl.trim() }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to parse job URL');
+      }
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to parse job posting');
+      }
+
+      // Auto-fill form fields
+      if (data.company_name) {
+        setCompany(data.company_name);
+      }
+      if (data.role_title) {
+        setRole(data.role_title);
+      }
+      if (data.job_description) {
+        setJobDescription(data.job_description);
+      }
+
+      setUrlError(null);
+      setJobUrl(''); // Clear URL after successful parse
+    } catch (error) {
+      setUrlError(error.message || 'Error parsing job URL. Please try again or enter details manually.');
+    } finally {
+      setParsingUrl(false);
+    }
+  };
+
   const handleCopy = async () => {
     if (!result?.content) return;
     try {
@@ -352,6 +407,35 @@ export default function Generator({ user }) {
                 ))}
               </div>
             </div>
+
+            {/* Job URL Parser */}
+            {(mode === 'cover-letter' || mode === 'job-application-answer') && (
+              <div className="generator__url-parser">
+                <label htmlFor="jobUrl">Or paste job posting URL (LinkedIn, Indeed, etc.)</label>
+                <div className="generator__url-input-group">
+                  <input
+                    id="jobUrl"
+                    type="url"
+                    value={jobUrl}
+                    onChange={(e) => setJobUrl(e.target.value)}
+                    placeholder="https://www.linkedin.com/jobs/view/..."
+                    disabled={parsingUrl}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleParseJobUrl}
+                    disabled={parsingUrl || !jobUrl.trim()}
+                    className="ghost ghost--bright"
+                  >
+                    {parsingUrl ? 'Parsing...' : 'Auto-fill'}
+                  </button>
+                </div>
+                {urlError && <p className="error">{urlError}</p>}
+                <p className="muted" style={{ fontSize: '0.875rem', marginTop: '0.5rem' }}>
+                  Paste a job posting URL to automatically fill company name, role title, and job description
+                </p>
+              </div>
+            )}
 
             {renderModeSpecificFields()}
 

@@ -1486,6 +1486,32 @@ input, textarea, select {
   box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
 }
 
+.generator__url-parser {
+  padding: 1.25rem;
+  background: #fafaf9;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.generator__url-input-group {
+  display: flex;
+  gap: 0.75rem;
+  align-items: stretch;
+}
+
+.generator__url-input-group input {
+  flex: 1;
+  margin: 0;
+}
+
+.generator__url-input-group button {
+  white-space: nowrap;
+  padding: 0.85rem 1.5rem;
+}
+
 .generator__inline {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));

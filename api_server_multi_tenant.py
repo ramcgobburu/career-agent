@@ -346,6 +346,200 @@ async def create_user_endpoint(
     )
 
 
+# Job URL Parser Models
+class ParseJobUrlRequest(BaseModel):
+    url: str = Field(..., description="URL of the job posting (LinkedIn, Indeed, etc.)")
+
+class ParseJobUrlResponse(BaseModel):
+    success: bool
+    company_name: Optional[str] = None
+    role_title: Optional[str] = None
+    job_description: Optional[str] = None
+    error: Optional[str] = None
+
+@app.post("/api/v1/parse-job-url", response_model=ParseJobUrlResponse)
+async def parse_job_url(
+    request: ParseJobUrlRequest,
+    user: User = Depends(get_current_user_from_header)
+):
+    """Parse job posting URL and extract company name, role title, and job description."""
+    try:
+        import requests
+        from bs4 import BeautifulSoup
+        import re
+        
+        # Validate URL
+        if not request.url.startswith(('http://', 'https://')):
+            return ParseJobUrlResponse(
+                success=False,
+                error="Invalid URL format. Please provide a full URL starting with http:// or https://"
+            )
+        
+        # Set headers to mimic a browser
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5',
+        }
+        
+        # Fetch the page
+        response = requests.get(request.url, headers=headers, timeout=10)
+        response.raise_for_status()
+        
+        # Parse HTML
+        soup = BeautifulSoup(response.content, 'html.parser')
+        
+        # Initialize result
+        company_name = None
+        role_title = None
+        job_description = None
+        
+        # Detect platform and parse accordingly
+        url_lower = request.url.lower()
+        
+        if 'linkedin.com/jobs' in url_lower:
+            # LinkedIn job posting
+            # Try to find job title
+            title_selectors = [
+                'h1.top-card-layout__title',
+                'h1.job-details-jobs-unified-top-card__job-title',
+                'h1[data-test-id="job-title"]',
+                '.job-details-jobs-unified-top-card__job-title',
+                'h1'
+            ]
+            for selector in title_selectors:
+                title_elem = soup.select_one(selector)
+                if title_elem:
+                    role_title = title_elem.get_text(strip=True)
+                    break
+            
+            # Try to find company name
+            company_selectors = [
+                'a.topcard__org-name-link',
+                'a.job-details-jobs-unified-top-card__company-name',
+                '[data-test-id="job-poster"]',
+                '.job-details-jobs-unified-top-card__company-name',
+                'a[data-tracking-control-name="public_jobs_topcard-org-name"]'
+            ]
+            for selector in company_selectors:
+                company_elem = soup.select_one(selector)
+                if company_elem:
+                    company_name = company_elem.get_text(strip=True)
+                    break
+            
+            # Try to find job description
+            desc_selectors = [
+                'div.show-more-less-html__markup',
+                'div.description__text',
+                'div[data-test-id="job-description"]',
+                '.jobs-description__text',
+                'div.description'
+            ]
+            for selector in desc_selectors:
+                desc_elem = soup.select_one(selector)
+                if desc_elem:
+                    # Remove script and style elements
+                    for script in desc_elem(["script", "style"]):
+                        script.decompose()
+                    job_description = desc_elem.get_text(separator='\n', strip=True)
+                    # Clean up excessive whitespace
+                    job_description = re.sub(r'\n{3,}', '\n\n', job_description)
+                    break
+        
+        elif 'indeed.com' in url_lower or 'indeed.ca' in url_lower:
+            # Indeed job posting
+            title_elem = soup.select_one('h1.jobsearch-JobInfoHeader-title, h1[data-testid="job-title"]')
+            if title_elem:
+                role_title = title_elem.get_text(strip=True)
+            
+            company_elem = soup.select_one('a[data-testid="inlineHeader-companyName"], .jobsearch-InlineCompanyRating')
+            if company_elem:
+                company_name = company_elem.get_text(strip=True)
+            
+            desc_elem = soup.select_one('#jobDescriptionText, .jobsearch-jobDescriptionText')
+            if desc_elem:
+                for script in desc_elem(["script", "style"]):
+                    script.decompose()
+                job_description = desc_elem.get_text(separator='\n', strip=True)
+                job_description = re.sub(r'\n{3,}', '\n\n', job_description)
+        
+        else:
+            # Generic parsing - try common patterns
+            # Look for common job title patterns
+            title_patterns = [
+                soup.select_one('h1'),
+                soup.select_one('title'),
+            ]
+            for elem in title_patterns:
+                if elem:
+                    text = elem.get_text(strip=True)
+                    # Common patterns: "Job Title at Company" or "Job Title - Company"
+                    if ' at ' in text or ' - ' in text:
+                        parts = re.split(r'\s+at\s+|\s+-\s+', text, 1)
+                        if len(parts) == 2:
+                            role_title = parts[0].strip()
+                            company_name = parts[1].strip()
+                        break
+                    elif len(text) < 100:  # Likely a title if short
+                        role_title = text
+                        break
+            
+            # Look for description in common containers
+            desc_containers = soup.select('main, article, .content, .description, #description')
+            for container in desc_containers:
+                text = container.get_text(separator='\n', strip=True)
+                if len(text) > 200:  # Likely a description if long
+                    job_description = re.sub(r'\n{3,}', '\n\n', text)
+                    break
+        
+        # If we didn't find anything, try meta tags
+        if not role_title:
+            meta_title = soup.find('meta', property='og:title')
+            if meta_title:
+                role_title = meta_title.get('content', '').strip()
+        
+        if not company_name:
+            meta_company = soup.find('meta', property='og:site_name')
+            if meta_company:
+                company_name = meta_company.get('content', '').strip()
+        
+        # Clean up results
+        if role_title:
+            role_title = role_title.strip()
+        if company_name:
+            company_name = company_name.strip()
+        if job_description:
+            job_description = job_description.strip()
+            # Limit description length
+            if len(job_description) > 5000:
+                job_description = job_description[:5000] + "..."
+        
+        if not role_title and not company_name and not job_description:
+            return ParseJobUrlResponse(
+                success=False,
+                error="Could not extract job information from this URL. Please try a different job posting or enter details manually."
+            )
+        
+        return ParseJobUrlResponse(
+            success=True,
+            company_name=company_name,
+            role_title=role_title,
+            job_description=job_description
+        )
+        
+    except requests.exceptions.RequestException as e:
+        return ParseJobUrlResponse(
+            success=False,
+            error=f"Failed to fetch job posting: {str(e)}"
+        )
+    except Exception as e:
+        logger.error(f"Error parsing job URL: {str(e)}")
+        return ParseJobUrlResponse(
+            success=False,
+            error=f"Error parsing job posting: {str(e)}"
+        )
+
+
 @app.post("/api/v1/upload-context", response_model=UploadContextResponse)
 async def upload_context(
     file: Optional[UploadFile] = File(None),
