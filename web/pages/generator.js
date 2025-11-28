@@ -476,19 +476,20 @@ export default function Generator({ user }) {
               <div 
                 className="generator__error-message"
                 style={{
-                  color: '#dc2626',
-                  backgroundColor: '#fef2f2',
-                  border: '2px solid #dc2626',
-                  padding: '1rem',
-                  borderRadius: '0.5rem',
-                  marginTop: '1rem',
-                  marginBottom: '1rem',
-                  fontSize: '0.95rem',
-                  lineHeight: '1.5',
-                  fontWeight: '500'
+                  color: '#dc2626 !important',
+                  backgroundColor: '#fef2f2 !important',
+                  border: '2px solid #dc2626 !important',
+                  padding: '1rem !important',
+                  borderRadius: '0.5rem !important',
+                  marginTop: '1rem !important',
+                  marginBottom: '1rem !important',
+                  fontSize: '0.95rem !important',
+                  lineHeight: '1.5 !important',
+                  fontWeight: '500 !important',
+                  display: 'block !important'
                 }}
               >
-                {errorMessage}
+                <span style={{ color: '#dc2626 !important' }}>{errorMessage}</span>
               </div>
             )}
 
