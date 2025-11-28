@@ -399,8 +399,8 @@ export default function Dashboard({ user }) {
             </div>
             <form className="context-form" onSubmit={handleUpload}>
               <div className="input-group">
-                <label htmlFor="context-file">Upload a .txt or .md file</label>
-                <input id="context-file" type="file" accept=".txt,.md,.markdown" onChange={handleFileChange} />
+                <label htmlFor="context-file">Upload a .txt, .md, .doc, or .pdf file</label>
+                <input id="context-file" type="file" accept=".txt,.md,.markdown,.doc,.docx,.pdf" onChange={handleFileChange} />
                 {selectedFile && <span className="muted">Selected file: {selectedFile.name}</span>}
               </div>
 

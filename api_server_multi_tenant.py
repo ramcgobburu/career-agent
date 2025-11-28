@@ -353,19 +353,63 @@ async def upload_context(
     user: User = Depends(get_current_user_from_header),
     db: Session = Depends(get_db)
 ):
-    """Upload career context document (markdown/text file or raw text)."""
+    """Upload career context document (text, markdown, doc, or pdf file)."""
     # Clear agent cache for this user
     if user.id in agent_cache:
         del agent_cache[user.id]
     
     # Get context text from file or form
     if file:
-        if file.content_type not in ["text/plain", "text/markdown", "text/x-markdown", None]:
-            raise HTTPException(status_code=400, detail="File must be text or markdown")
-        content = await file.read()
-        context_text = content.decode('utf-8')
         file_name = file.filename
-        file_type = Path(file_name).suffix if file_name else None
+        file_type = Path(file_name).suffix.lower() if file_name else None
+        content = await file.read()
+        
+        # Handle different file types
+        if file_type in ['.txt', '.md', '.markdown']:
+            # Text files
+            if file.content_type not in ["text/plain", "text/markdown", "text/x-markdown", None]:
+                raise HTTPException(status_code=400, detail="File must be text or markdown")
+            context_text = content.decode('utf-8')
+        elif file_type in ['.pdf']:
+            # PDF files
+            try:
+                import pypdf
+                from io import BytesIO
+                pdf_reader = pypdf.PdfReader(BytesIO(content))
+                text_parts = []
+                for page in pdf_reader.pages:
+                    text_parts.append(page.extract_text())
+                context_text = '\n\n'.join(text_parts)
+            except ImportError:
+                raise HTTPException(
+                    status_code=503,
+                    detail="PDF support not available. Please install pypdf: pip install pypdf"
+                )
+            except Exception as e:
+                raise HTTPException(status_code=400, detail=f"Error reading PDF: {str(e)}")
+        elif file_type in ['.doc', '.docx']:
+            # Word documents
+            try:
+                from docx import Document as DocxDocument
+                from io import BytesIO
+                doc = DocxDocument(BytesIO(content))
+                text_parts = []
+                for paragraph in doc.paragraphs:
+                    if paragraph.text.strip():
+                        text_parts.append(paragraph.text)
+                context_text = '\n\n'.join(text_parts)
+            except ImportError:
+                raise HTTPException(
+                    status_code=503,
+                    detail="Word document support not available. Please install python-docx: pip install python-docx"
+                )
+            except Exception as e:
+                raise HTTPException(status_code=400, detail=f"Error reading Word document: {str(e)}")
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unsupported file type: {file_type}. Supported types: .txt, .md, .pdf, .doc, .docx"
+            )
     elif context_text:
         file_name = None
         file_type = None
