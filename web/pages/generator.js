@@ -175,6 +175,7 @@ export default function Generator({ user }) {
       const data = await response.json();
       setResult(data);
       setErrorMessage(null); // Clear any previous errors on success
+      setSubmitting(false); // Reset submitting state after successful generation
     } catch (error) {
       const message = error.message || 'Error generating content. Please try again.';
       setSubmitting(false);
@@ -517,9 +518,16 @@ export default function Generator({ user }) {
                     )}
                   </div>
                   <pre className="generator__result">{result.content}</pre>
-                  <button type="button" className="ghost ghost--bright" onClick={handleCopy}>
-                    Copy text
-                  </button>
+                  <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem' }}>
+                    <button type="button" className="ghost ghost--bright" onClick={handleCopy}>
+                      Copy text
+                    </button>
+                    {mode === 'cover-letter' && (
+                      <button type="button" className="ghost ghost--bright" onClick={handleDownloadWord}>
+                        Download as Word
+                      </button>
+                    )}
+                  </div>
                   {result.usage_info && (
                     <p className="muted generator__usage-hint">
                       {result.usage_info.requests_used} of {result.usage_info.requests_limit} requests used.

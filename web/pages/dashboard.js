@@ -246,6 +246,37 @@ export default function Dashboard({ user }) {
       return;
     }
 
+    // Check if there are existing contexts and show warning
+    if (contexts && contexts.length > 0) {
+      const confirmUpload = window.confirm(
+        'You have existing career context documents. If you continue, all existing context documents will be deleted and replaced with this new upload. Do you want to continue?'
+      );
+      
+      if (!confirmUpload) {
+        return; // User cancelled
+      }
+
+      // Delete all existing contexts
+      console.log(`Deleting ${contexts.length} existing context(s)...`);
+      for (const context of contexts) {
+        try {
+          const deleteResponse = await fetch(`${apiBaseUrl}/api/v1/contexts/${context.id}`, {
+            method: 'DELETE',
+            headers: authHeaders,
+          });
+          
+          if (!deleteResponse.ok) {
+            console.warn(`Failed to delete context ${context.id}`);
+          }
+        } catch (err) {
+          console.warn(`Error deleting context ${context.id}:`, err);
+        }
+      }
+      
+      // Wait a moment for deletions to complete
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+
     const formData = new FormData();
     if (selectedFile) {
       formData.append('file', selectedFile);
