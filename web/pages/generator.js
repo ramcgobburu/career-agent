@@ -177,12 +177,12 @@ export default function Generator({ user }) {
     } catch (error) {
       const message = error.message || 'Error generating content. Please try again.';
       console.error('Error in handleSubmit:', error);
-      console.log('Setting error message:', message);
-      setErrorMessage(message);
-      // Force a re-render by logging the state
-      setTimeout(() => {
-        console.log('Error message state after set:', errorMessage);
-      }, 100);
+      console.log('Setting error message to:', message);
+      // Use a function to ensure state update happens
+      setErrorMessage(() => {
+        console.log('Error message setter called with:', message);
+        return message;
+      });
     } finally {
       setSubmitting(false);
     }
@@ -478,11 +478,20 @@ export default function Generator({ user }) {
 
             {renderModeSpecificFields()}
 
-            {errorMessage && (
-              <div className="error" role="alert" style={{ display: 'block', visibility: 'visible' }}>
-                <strong>Error:</strong> {errorMessage}
+            {errorMessage ? (
+              <div className="error" role="alert" style={{ 
+                display: 'block', 
+                visibility: 'visible',
+                color: '#dc2626',
+                backgroundColor: '#fef2f2',
+                border: '1px solid #fecaca',
+                padding: '0.75rem',
+                borderRadius: '0.375rem',
+                marginTop: '0.5rem'
+              }}>
+                <strong>⚠️ Error:</strong> {errorMessage}
               </div>
-            )}
+            ) : null}
 
             <button type="submit" className="cta generator__submit" disabled={submitting}>
               {submitting ? 'Generating…' : 'Generate'}
