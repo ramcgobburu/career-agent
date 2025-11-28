@@ -76,6 +76,11 @@ export default function Dashboard({ user }) {
       });
 
       if (!response.ok) {
+        // If 401, user is not authenticated - don't show error, just return
+        if (response.status === 401) {
+          setLoadingProfile(false);
+          return;
+        }
         const errorBody = await response.json().catch(() => ({}));
         throw new Error(errorBody.detail || 'Failed to load profile');
       }
@@ -83,7 +88,10 @@ export default function Dashboard({ user }) {
       const data = await response.json();
       setProfile(data);
     } catch (err) {
-      setProfileError(err.message);
+      // Only set error if it's not a 401 (unauthorized)
+      if (!err.message.includes('401') && !err.message.includes('Unauthorized')) {
+        setProfileError(err.message);
+      }
     } finally {
       setLoadingProfile(false);
     }
@@ -103,6 +111,18 @@ export default function Dashboard({ user }) {
       });
 
       if (!response.ok) {
+        // If 404, the endpoint doesn't exist - that's okay, just set empty contexts
+        if (response.status === 404) {
+          setContexts([]);
+          setLoadingContexts(false);
+          return;
+        }
+        // If 401, user is not authenticated - don't show error, just return
+        if (response.status === 401) {
+          setContexts([]);
+          setLoadingContexts(false);
+          return;
+        }
         const errorBody = await response.json().catch(() => ({}));
         throw new Error(errorBody.detail || 'Failed to load contexts');
       }
@@ -110,7 +130,12 @@ export default function Dashboard({ user }) {
       const data = await response.json();
       setContexts(data.contexts || []);
     } catch (err) {
-      setContextsError(err.message);
+      // Only set error if it's not a 404 or 401 (which we handle above)
+      if (!err.message.includes('404') && !err.message.includes('401')) {
+        setContextsError(err.message);
+      } else {
+        setContexts([]);
+      }
     } finally {
       setLoadingContexts(false);
     }
@@ -144,15 +169,22 @@ export default function Dashboard({ user }) {
   }, [apiBaseUrl, accessToken, authHeaders]);
 
   useEffect(() => {
-    if (!accessToken || !apiBaseUrl) {
+    // Don't fetch if user is not authenticated
+    if (!session || !accessToken || !apiBaseUrl) {
       return;
     }
 
     fetchProfile();
     fetchContexts();
-  }, [accessToken, apiBaseUrl, fetchProfile, fetchContexts]);
+  }, [session, accessToken, apiBaseUrl, fetchProfile, fetchContexts]);
 
   const handleSignOut = async () => {
+    // Clear all state before signing out to prevent API calls
+    setProfile(null);
+    setContexts([]);
+    setProfileError(null);
+    setContextsError(null);
+    
     await supabase.auth.signOut();
     router.replace('/');
   };
