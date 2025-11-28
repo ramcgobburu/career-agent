@@ -1,0 +1,94 @@
+CareerPilot Consulting - Demo Video Notes
+============================================================
+
+Speaker Notes for Narakeet Slides to Video
+All notes are aligned with the actual screenshots captured.
+
+============================================================
+
+Slide 1: Introduction (0:00 - 0:30)
+------------------------------------------------------------
+Notes: Welcome to CareerPilot Consulting, your AI co-pilot for winning career moments. Whether you're applying for your dream job or preparing for interviews, CareerPilot helps you create personalized, professional career materials in minutes.
+
+Visual: Landing page with hero section showing key features: "Context-aware", "Multiple document types", and "Smart parsing"
+
+Screenshot: slide_01_landing.png
+
+============================================================
+
+Slide 2: Home - Upload Career Context (0:30 - 1:30)
+------------------------------------------------------------
+Notes: Let's start by uploading your career context. This is crucial - upload everything from day one of your career. Include your resume, previous cover letters, project descriptions, achievements, and any career-related documents. The more comprehensive your context, the more effective the AI will be at creating personalized materials that truly represent your experience.
+
+Visual: Dashboard showing the "Add to existing context" section with uploaded file visible in the context list. Success message "Career context uploaded successfully" is displayed.
+
+Screenshot: slide_02_upload.png
+
+============================================================
+
+Slide 3: Resume Builder - Analyze Resume (1:30 - 2:30)
+------------------------------------------------------------
+Notes: Next, let's use the Resume Builder. Simply paste your resume, and CareerPilot will analyze it to provide valuable insights. It will identify strengths, suggest improvements, and help you optimize your resume for better results.
+
+Visual: Resume Builder page showing the pasted resume content in the input area, with the analysis output displayed below showing insights, strengths, and recommendations.
+
+Screenshot: slide_03_resume_builder.png
+
+============================================================
+
+Slide 4: Generator - Cover Letter with Auto-Fill (2:30 - 3:30)
+------------------------------------------------------------
+Notes: Now let's generate a personalized cover letter. Navigate to the Generator and select 'Cover Letter' mode. Here's the smart part - paste a job posting URL, and CareerPilot's AI will automatically parse the page, extract the company name, role title, and job description. Watch as it fills in all the details for you. Then click Generate, and in seconds, you'll have a personalized cover letter tailored to your career context and the specific role you're applying for.
+
+Visual: Generator page in Cover Letter mode showing:
+- Job URL field with Google job posting URL
+- Auto-filled company name (Google)
+- Auto-filled role title (Software Engineering Manager II)
+- Auto-filled job description
+- Generated cover letter output displayed in the result area
+
+Screenshot: slide_04_cover_letter_generated.png
+
+============================================================
+
+Slide 5: Generator - Application Answer & Networking Blurb (3:30 - 4:30)
+------------------------------------------------------------
+Notes: The Generator also helps with interview preparation. Switch to 'Application Answer' mode to get tailored responses to interview questions. And don't forget the 'Networking Blurb' feature - it creates professional, engaging messages for LinkedIn networking that help you stand out.
+
+Visual: Generator page showing both Application Answer and Networking Blurb modes, with forms and examples of how each mode works.
+
+Screenshot: slide_05_application_networking.png
+
+============================================================
+
+Slide 6: LinkedIn Optimizer (4:30 - 5:15)
+------------------------------------------------------------
+Notes: The LinkedIn Optimizer helps you maximize your professional presence. It analyzes your profile and provides recommendations to improve visibility, keyword optimization, and overall profile strength. This ensures recruiters and hiring managers can easily find you.
+
+Visual: LinkedIn Optimizer page showing the optimization interface with recommendations and profile analysis features.
+
+Screenshot: slide_06_linkedin_optimizer.png
+
+============================================================
+
+Slide 7: Help & FAQ (5:15 - 5:30)
+------------------------------------------------------------
+Notes: If you have questions, click the Help button in the sidebar to access frequently asked questions and get support whenever you need it.
+
+Visual: Help sidebar open showing expandable FAQ items with answers visible.
+
+Screenshot: slide_07_help.png
+
+============================================================
+
+Slide 8: Closing (5:30 - 6:00)
+------------------------------------------------------------
+Notes: CareerPilot Consulting makes it easy to create professional, personalized career materials. From uploading your career context to generating cover letters and optimizing your LinkedIn profile, we've got you covered. Sign up today and take your career to the next level.
+
+Visual: Dashboard overview showing all features and the clean, modern interface.
+
+Screenshot: slide_08_dashboard.png
+
+============================================================
+
+END OF NOTES

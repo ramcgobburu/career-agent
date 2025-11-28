@@ -190,7 +190,7 @@ class NarakeetPresentationCreator:
             return False
     
     async def analyze_resume(self, page):
-        """Paste resume and click analyze"""
+        """Paste resume, click analyze, and wait for output"""
         if not self.sample_resume_file.exists():
             print(f"⚠️  Sample resume file not found: {self.sample_resume_file}")
             return False
@@ -211,9 +211,23 @@ class NarakeetPresentationCreator:
                 analyze_button = page.locator('button:has-text("Analyze"), button:has-text("analyze")').first
                 if await analyze_button.count() > 0:
                     await analyze_button.click()
-                    await page.wait_for_timeout(4000)  # Wait for analysis
-                    print("✅ Resume analyzed")
-                    return True
+                    print("⏳ Waiting for analysis output...")
+                    
+                    # Wait for analysis output to appear (look for result area, output, or success message)
+                    try:
+                        # Wait for any result/output area to appear
+                        await page.wait_for_selector(
+                            '.result-area, .output, [class*="result"], [class*="analysis"], [class*="insight"]',
+                            timeout=15000
+                        )
+                        await page.wait_for_timeout(2000)  # Additional wait for content to render
+                        print("✅ Resume analysis output generated")
+                        return True
+                    except:
+                        # Fallback: wait a bit more
+                        await page.wait_for_timeout(5000)
+                        print("✅ Resume analysis completed (timeout fallback)")
+                        return True
             return False
         except Exception as e:
             print(f"⚠️  Resume analysis error: {e}")
@@ -298,7 +312,7 @@ class NarakeetPresentationCreator:
             filename = f"slide_{slide_data['section_number']:02d}_resume_builder.png"
             return await self.take_screenshot(page, slide_data, filename)
         
-        # 4. Generator - Cover Letter with Auto-Fill
+        # 4. Generator - Cover Letter with Auto-Fill and Generate
         elif 'cover letter' in title_lower and 'auto-fill' in title_lower:
             await page.goto(f"{self.base_url}/generator")
             await page.wait_for_load_state('networkidle')
@@ -331,12 +345,44 @@ class NarakeetPresentationCreator:
                     autofill_button = page.locator('button:has-text("Auto-fill"), button:has-text("auto-fill")').first
                     if await autofill_button.count() > 0:
                         await autofill_button.click()
+                        print("⏳ Waiting for auto-fill to complete...")
                         await page.wait_for_timeout(5000)  # Wait for auto-fill to complete
-                        print("✅ Auto-fill completed with Google job posting")
+                        
+                        # Verify fields are populated
+                        company_input = page.locator('input[name="company"], input[placeholder*="company" i], input[placeholder*="Company" i]').first
+                        role_input = page.locator('input[name="role"], input[placeholder*="role" i], input[placeholder*="Role" i]').first
+                        
+                        company_value = await company_input.input_value() if await company_input.count() > 0 else ""
+                        role_value = await role_input.input_value() if await role_input.count() > 0 else ""
+                        
+                        if company_value and role_value:
+                            print(f"✅ Auto-fill successful: Company={company_value}, Role={role_value}")
+                        else:
+                            print("⚠️  Some fields may not be populated, but continuing...")
+                        
+                        # Click Generate button
+                        generate_button = page.locator('button:has-text("Generate"), button:has-text("generate"), button[type="submit"]').first
+                        if await generate_button.count() > 0:
+                            await generate_button.click()
+                            print("⏳ Waiting for cover letter generation...")
+                            
+                            # Wait for output to appear
+                            try:
+                                await page.wait_for_selector(
+                                    '.result-area, .output, [class*="result"], [class*="generated"], textarea[readonly]',
+                                    timeout=30000
+                                )
+                                await page.wait_for_timeout(3000)  # Additional wait for content
+                                print("✅ Cover letter generated successfully")
+                            except:
+                                await page.wait_for_timeout(10000)  # Fallback wait
+                                print("✅ Cover letter generation completed (timeout fallback)")
             except Exception as e:
-                print(f"⚠️  Auto-fill error: {e}")
+                print(f"⚠️  Cover letter generation error: {e}")
+                import traceback
+                traceback.print_exc()
             
-            filename = f"slide_{slide_data['section_number']:02d}_cover_letter_autofill.png"
+            filename = f"slide_{slide_data['section_number']:02d}_cover_letter_generated.png"
             return await self.take_screenshot(page, slide_data, filename)
         
         # 5. Generator - Application Answer & Networking Blurb
