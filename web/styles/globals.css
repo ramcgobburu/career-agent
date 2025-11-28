@@ -1623,7 +1623,9 @@ input, textarea, select {
   color: #0f172a;
 }
 
+#generator-error-message,
 .generator__form .generator__error-message,
+.generator__form #generator-error-message,
 .generator__error-message,
 form .generator__error-message,
 .generator .generator__error-message {
@@ -1640,7 +1642,10 @@ form .generator__error-message,
   display: block !important;
 }
 
+#generator-error-message *,
+#generator-error-message span,
 .generator__form .generator__error-message *,
+.generator__form #generator-error-message *,
 .generator__error-message *,
 form .generator__error-message *,
 .generator .generator__error-message * {

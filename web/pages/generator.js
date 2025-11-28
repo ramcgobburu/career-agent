@@ -474,6 +474,7 @@ export default function Generator({ user }) {
 
             {errorMessage && (
               <div 
+                id="generator-error-message"
                 className="generator__error-message"
                 style={{
                   color: '#dc2626',
@@ -489,7 +490,7 @@ export default function Generator({ user }) {
                   display: 'block'
                 }}
               >
-                <span style={{ color: '#dc2626' }}>{errorMessage}</span>
+                <span style={{ color: '#dc2626', display: 'inline-block', width: '100%' }}>{errorMessage}</span>
               </div>
             )}
 
