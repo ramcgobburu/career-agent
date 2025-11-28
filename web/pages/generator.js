@@ -157,8 +157,12 @@ export default function Generator({ user }) {
         const errorBody = await response.json().catch(() => ({}));
         let errorDetail = errorBody.detail || errorBody.message || errorBody.error || `Server returned ${response.status}`;
         
-        // Make error messages more user-friendly
-        if (errorDetail.includes('No career context found') || errorDetail.includes('upload your career context') || errorDetail.includes('upload-context')) {
+        // Make error messages more user-friendly - check for any mention of career context or upload
+        const errorLower = errorDetail.toLowerCase();
+        if (errorLower.includes('career context') || 
+            errorLower.includes('upload') || 
+            errorLower.includes('upload-context') ||
+            errorLower.includes('/api/v1/upload')) {
           errorDetail = 'Please upload your career context first. Go to the home page and upload your resume or career document.';
         }
         
