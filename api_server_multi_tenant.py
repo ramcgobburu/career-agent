@@ -399,19 +399,41 @@ async def parse_job_url(
         
         if 'linkedin.com/jobs' in url_lower:
             # LinkedIn job posting
+            # Try JSON-LD structured data first (most reliable)
+            json_ld_scripts = soup.find_all('script', type='application/ld+json')
+            for script in json_ld_scripts:
+                try:
+                    import json
+                    data = json.loads(script.string)
+                    if isinstance(data, dict):
+                        if 'title' in data and not role_title:
+                            role_title = data['title']
+                        if 'hiringOrganization' in data:
+                            org = data['hiringOrganization']
+                            if isinstance(org, dict) and 'name' in org and not company_name:
+                                company_name = org['name']
+                            elif isinstance(org, str) and not company_name:
+                                company_name = org
+                except:
+                    pass
+            
             # Try to find job title
             title_selectors = [
                 'h1.top-card-layout__title',
                 'h1.job-details-jobs-unified-top-card__job-title',
                 'h1[data-test-id="job-title"]',
                 '.job-details-jobs-unified-top-card__job-title',
+                'h1.jobs-details-top-card__job-title',
+                'h1.job-details-jobs-unified-top-card__job-title-link',
                 'h1'
             ]
             for selector in title_selectors:
                 title_elem = soup.select_one(selector)
                 if title_elem:
-                    role_title = title_elem.get_text(strip=True)
-                    break
+                    text = title_elem.get_text(strip=True)
+                    if text and len(text) < 200:  # Reasonable title length
+                        role_title = text
+                        break
             
             # Try to find company name
             company_selectors = [
@@ -419,13 +441,40 @@ async def parse_job_url(
                 'a.job-details-jobs-unified-top-card__company-name',
                 '[data-test-id="job-poster"]',
                 '.job-details-jobs-unified-top-card__company-name',
-                'a[data-tracking-control-name="public_jobs_topcard-org-name"]'
+                'a[data-tracking-control-name="public_jobs_topcard-org-name"]',
+                '.jobs-details-top-card__company-name',
+                'a.jobs-details-top-card__company-name',
+                'span.jobs-details-top-card__company-name'
             ]
             for selector in company_selectors:
                 company_elem = soup.select_one(selector)
                 if company_elem:
-                    company_name = company_elem.get_text(strip=True)
-                    break
+                    text = company_elem.get_text(strip=True)
+                    if text and len(text) < 100:  # Reasonable company name length
+                        company_name = text
+                        break
+            
+            # Try extracting from page title if still not found
+            if not role_title or not company_name:
+                page_title = soup.find('title')
+                if page_title:
+                    title_text = page_title.get_text(strip=True)
+                    # LinkedIn titles often format as "Job Title | Company | LinkedIn"
+                    if '|' in title_text:
+                        parts = [p.strip() for p in title_text.split('|')]
+                        if len(parts) >= 2:
+                            if not role_title and parts[0] and 'linkedin' not in parts[0].lower():
+                                role_title = parts[0]
+                            if not company_name and len(parts) >= 2 and 'linkedin' not in parts[1].lower():
+                                company_name = parts[1]
+                    elif ' at ' in title_text.lower():
+                        # "Job Title at Company"
+                        parts = re.split(r'\s+at\s+', title_text, 1, flags=re.IGNORECASE)
+                        if len(parts) == 2:
+                            if not role_title:
+                                role_title = parts[0].strip()
+                            if not company_name:
+                                company_name = parts[1].strip()
             
             # Try to find job description
             desc_selectors = [
@@ -448,13 +497,71 @@ async def parse_job_url(
         
         elif 'indeed.com' in url_lower or 'indeed.ca' in url_lower:
             # Indeed job posting
-            title_elem = soup.select_one('h1.jobsearch-JobInfoHeader-title, h1[data-testid="job-title"]')
-            if title_elem:
-                role_title = title_elem.get_text(strip=True)
+            # Try JSON-LD structured data first
+            json_ld_scripts = soup.find_all('script', type='application/ld+json')
+            for script in json_ld_scripts:
+                try:
+                    import json
+                    data = json.loads(script.string)
+                    if isinstance(data, dict):
+                        if 'title' in data and not role_title:
+                            role_title = data['title']
+                        if 'hiringOrganization' in data:
+                            org = data['hiringOrganization']
+                            if isinstance(org, dict) and 'name' in org and not company_name:
+                                company_name = org['name']
+                            elif isinstance(org, str) and not company_name:
+                                company_name = org
+                except:
+                    pass
             
-            company_elem = soup.select_one('a[data-testid="inlineHeader-companyName"], .jobsearch-InlineCompanyRating')
-            if company_elem:
-                company_name = company_elem.get_text(strip=True)
+            # Try to find job title
+            title_selectors = [
+                'h1.jobsearch-JobInfoHeader-title',
+                'h1[data-testid="job-title"]',
+                'h1.jobsearch-JobInfoHeader-title--wrap',
+                'h1'
+            ]
+            for selector in title_selectors:
+                title_elem = soup.select_one(selector)
+                if title_elem:
+                    text = title_elem.get_text(strip=True)
+                    if text and len(text) < 200:
+                        role_title = text
+                        break
+            
+            # Try to find company name
+            company_selectors = [
+                'a[data-testid="inlineHeader-companyName"]',
+                '.jobsearch-InlineCompanyRating',
+                'a[data-testid="job-poster"]',
+                'span[data-testid="job-poster"]',
+                'div[data-testid="job-poster"]',
+                'a.jobsearch-CompanyReview--primary'
+            ]
+            for selector in company_selectors:
+                company_elem = soup.select_one(selector)
+                if company_elem:
+                    text = company_elem.get_text(strip=True)
+                    if text and len(text) < 100:
+                        company_name = text
+                        break
+            
+            # Try extracting from page title if still not found
+            if not role_title or not company_name:
+                page_title = soup.find('title')
+                if page_title:
+                    title_text = page_title.get_text(strip=True)
+                    # Indeed titles often format as "Job Title - Company | Indeed"
+                    if ' - ' in title_text:
+                        parts = [p.strip() for p in title_text.split(' - ', 1)]
+                        if len(parts) >= 2:
+                            if not role_title and parts[0]:
+                                role_title = parts[0]
+                            # Remove "| Indeed" from company name
+                            company_part = parts[1].split('|')[0].strip()
+                            if not company_name and company_part:
+                                company_name = company_part
             
             desc_elem = soup.select_one('#jobDescriptionText, .jobsearch-jobDescriptionText')
             if desc_elem:
@@ -496,12 +603,58 @@ async def parse_job_url(
         if not role_title:
             meta_title = soup.find('meta', property='og:title')
             if meta_title:
-                role_title = meta_title.get('content', '').strip()
+                title_content = meta_title.get('content', '').strip()
+                if title_content:
+                    # Parse "Job Title | Company" or "Job Title - Company" from og:title
+                    if '|' in title_content:
+                        role_title = title_content.split('|')[0].strip()
+                    elif ' - ' in title_content:
+                        role_title = title_content.split(' - ')[0].strip()
+                    else:
+                        role_title = title_content
         
         if not company_name:
+            # Try og:site_name
             meta_company = soup.find('meta', property='og:site_name')
             if meta_company:
                 company_name = meta_company.get('content', '').strip()
+            
+            # Try to extract from og:title if it has company info
+            if not company_name:
+                meta_title = soup.find('meta', property='og:title')
+                if meta_title:
+                    title_content = meta_title.get('content', '').strip()
+                    if '|' in title_content:
+                        parts = title_content.split('|')
+                        if len(parts) >= 2:
+                            company_name = parts[1].strip()
+                    elif ' - ' in title_content:
+                        parts = title_content.split(' - ', 1)
+                        if len(parts) == 2:
+                            company_name = parts[1].split('|')[0].strip()  # Remove "| Indeed" etc.
+        
+        # Final fallback: try to extract from page title
+        if (not role_title or not company_name) and soup.find('title'):
+            page_title = soup.find('title').get_text(strip=True)
+            # Common patterns: "Job Title | Company | Site" or "Job Title - Company | Site"
+            if '|' in page_title:
+                parts = [p.strip() for p in page_title.split('|')]
+                if len(parts) >= 2:
+                    if not role_title and parts[0]:
+                        role_title = parts[0]
+                    if not company_name and len(parts) >= 2:
+                        # Skip if it's the site name (LinkedIn, Indeed, etc.)
+                        potential_company = parts[1]
+                        if potential_company.lower() not in ['linkedin', 'indeed', 'glassdoor']:
+                            company_name = potential_company
+            elif ' - ' in page_title:
+                parts = page_title.split(' - ', 1)
+                if len(parts) == 2:
+                    if not role_title:
+                        role_title = parts[0].strip()
+                    company_part = parts[1].split('|')[0].strip()
+                    if not company_name and company_part.lower() not in ['linkedin', 'indeed', 'glassdoor']:
+                        company_name = company_part
         
         # Clean up results
         if role_title:
