@@ -404,6 +404,61 @@ export default function Generator({ user }) {
     }
   };
 
+  const handleDownloadWord = () => {
+    if (!result?.content) return;
+
+    // Create a simple Word document using HTML format that Word can open
+    const htmlContent = `
+      <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+      <head>
+        <meta charset='utf-8'>
+        <title>Cover Letter</title>
+        <!--[if gte mso 9]>
+        <xml>
+          <w:WordDocument>
+            <w:View>Print</w:View>
+            <w:Zoom>90</w:Zoom>
+            <w:DoNotOptimizeForBrowser/>
+          </w:WordDocument>
+        </xml>
+        <![endif]-->
+        <style>
+          body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.6;
+            margin: 1in;
+            color: #000;
+          }
+          p {
+            margin: 0 0 12pt 0;
+          }
+        </style>
+      </head>
+      <body>
+        ${result.content.split('\n').map(line => `<p>${line || '&nbsp;'}</p>`).join('')}
+      </body>
+      </html>
+    `;
+
+    // Create blob and download
+    const blob = new Blob(['\ufeff', htmlContent], { type: 'application/msword' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    
+    // Generate filename based on mode and company/role
+    const filename = mode === 'cover-letter' && company && role
+      ? `Cover_Letter_${company.replace(/[^a-z0-9]/gi, '_')}_${role.replace(/[^a-z0-9]/gi, '_')}.doc`
+      : `CareerPilot_${mode}_${new Date().toISOString().split('T')[0]}.doc`;
+    
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <AppShell>
       <Head>
