@@ -36,6 +36,7 @@ export default function Dashboard({ user }) {
   const [appendMessage, setAppendMessage] = useState(null);
 
   const [deletingContextId, setDeletingContextId] = useState(null);
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   const apiBaseUrl = useMemo(() => {
     if (process.env.NEXT_PUBLIC_API_BASE_URL) {
@@ -64,7 +65,7 @@ export default function Dashboard({ user }) {
   }, [accessToken]);
 
   const fetchProfile = useCallback(async () => {
-    if (!apiBaseUrl || !accessToken) {
+    if (!apiBaseUrl || !accessToken || isSigningOut) {
       return;
     }
     setLoadingProfile(true);
@@ -86,19 +87,24 @@ export default function Dashboard({ user }) {
       }
 
       const data = await response.json();
-      setProfile(data);
+      // Only set profile if not signing out
+      if (!isSigningOut) {
+        setProfile(data);
+      }
     } catch (err) {
-      // Only set error if it's not a 401 (unauthorized)
-      if (!err.message.includes('401') && !err.message.includes('Unauthorized')) {
+      // Only set error if it's not a 401 (unauthorized) and not signing out
+      if (!isSigningOut && !err.message.includes('401') && !err.message.includes('Unauthorized')) {
         setProfileError(err.message);
       }
     } finally {
-      setLoadingProfile(false);
+      if (!isSigningOut) {
+        setLoadingProfile(false);
+      }
     }
-  }, [apiBaseUrl, accessToken, authHeaders]);
+  }, [apiBaseUrl, accessToken, authHeaders, isSigningOut]);
 
   const fetchContexts = useCallback(async () => {
-    if (!apiBaseUrl || !accessToken) {
+    if (!apiBaseUrl || !accessToken || isSigningOut) {
       return;
     }
 
@@ -113,14 +119,18 @@ export default function Dashboard({ user }) {
       if (!response.ok) {
         // If 404, the endpoint doesn't exist - that's okay, just set empty contexts
         if (response.status === 404) {
-          setContexts([]);
-          setLoadingContexts(false);
+          if (!isSigningOut) {
+            setContexts([]);
+            setLoadingContexts(false);
+          }
           return;
         }
         // If 401, user is not authenticated - don't show error, just return
         if (response.status === 401) {
-          setContexts([]);
-          setLoadingContexts(false);
+          if (!isSigningOut) {
+            setContexts([]);
+            setLoadingContexts(false);
+          }
           return;
         }
         const errorBody = await response.json().catch(() => ({}));
@@ -128,18 +138,23 @@ export default function Dashboard({ user }) {
       }
 
       const data = await response.json();
-      setContexts(data.contexts || []);
+      // Only set contexts if not signing out
+      if (!isSigningOut) {
+        setContexts(data.contexts || []);
+      }
     } catch (err) {
-      // Only set error if it's not a 404 or 401 (which we handle above)
-      if (!err.message.includes('404') && !err.message.includes('401')) {
+      // Only set error if it's not a 404 or 401 (which we handle above) and not signing out
+      if (!isSigningOut && !err.message.includes('404') && !err.message.includes('401')) {
         setContextsError(err.message);
-      } else {
+      } else if (!isSigningOut) {
         setContexts([]);
       }
     } finally {
-      setLoadingContexts(false);
+      if (!isSigningOut) {
+        setLoadingContexts(false);
+      }
     }
-  }, [apiBaseUrl, accessToken, authHeaders]);
+  }, [apiBaseUrl, accessToken, authHeaders, isSigningOut]);
 
   const fetchUsage = useCallback(async () => {
     if (!apiBaseUrl || !accessToken) {
@@ -169,24 +184,40 @@ export default function Dashboard({ user }) {
   }, [apiBaseUrl, accessToken, authHeaders]);
 
   useEffect(() => {
-    // Don't fetch if user is not authenticated
-    if (!session || !accessToken || !apiBaseUrl) {
+    // Don't fetch if user is not authenticated or if signing out
+    if (!session || !accessToken || !apiBaseUrl || isSigningOut) {
       return;
     }
 
     fetchProfile();
     fetchContexts();
-  }, [session, accessToken, apiBaseUrl, fetchProfile, fetchContexts]);
+  }, [session, accessToken, apiBaseUrl, isSigningOut, fetchProfile, fetchContexts]);
 
   const handleSignOut = async () => {
-    // Clear all state before signing out to prevent API calls
-    setProfile(null);
-    setContexts([]);
-    setProfileError(null);
-    setContextsError(null);
-    
-    await supabase.auth.signOut();
-    router.replace('/');
+    try {
+      // Set signing out flag immediately to prevent any new API calls
+      setIsSigningOut(true);
+      
+      // Clear all state before signing out to prevent API calls
+      setProfile(null);
+      setContexts([]);
+      setProfileError(null);
+      setContextsError(null);
+      
+      // Sign out from Supabase
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('Sign out error:', error);
+      }
+      
+      // Redirect to home page
+      router.push('/');
+    } catch (err) {
+      console.error('Error during sign out:', err);
+      // Still try to redirect even if there's an error
+      router.push('/');
+    }
   };
 
   const handleFileChange = (event) => {
