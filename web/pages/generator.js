@@ -154,7 +154,13 @@ export default function Generator({ user }) {
 
       if (!response.ok) {
         const errorBody = await response.json().catch(() => ({}));
-        const errorDetail = errorBody.detail || errorBody.message || errorBody.error || `Server returned ${response.status}`;
+        let errorDetail = errorBody.detail || errorBody.message || errorBody.error || `Server returned ${response.status}`;
+        
+        // Make error messages more user-friendly
+        if (errorDetail.includes('No career context found') || errorDetail.includes('upload your career context')) {
+          errorDetail = 'Please upload your career context first. Go to the home page and upload your resume or career document.';
+        }
+        
         console.error('API Error:', {
           status: response.status,
           statusText: response.statusText,
