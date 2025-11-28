@@ -322,16 +322,19 @@ class NarakeetPresentationCreator:
             try:
                 url_input = page.locator('input[type="url"]').first
                 if await url_input.count() > 0:
-                    await url_input.fill('https://www.linkedin.com/jobs/view/example')
+                    # Use the real Google job posting URL
+                    google_job_url = 'https://www.google.com/about/careers/applications/jobs/results/109674029161292486-software-engineering-manager-ii-google-distributed-cloud-hosted'
+                    await url_input.fill(google_job_url)
                     await page.wait_for_timeout(1000)
                     
                     # Click auto-fill button
                     autofill_button = page.locator('button:has-text("Auto-fill"), button:has-text("auto-fill")').first
                     if await autofill_button.count() > 0:
                         await autofill_button.click()
-                        await page.wait_for_timeout(3000)  # Wait for auto-fill
-            except:
-                pass
+                        await page.wait_for_timeout(5000)  # Wait for auto-fill to complete
+                        print("✅ Auto-fill completed with Google job posting")
+            except Exception as e:
+                print(f"⚠️  Auto-fill error: {e}")
             
             filename = f"slide_{slide_data['section_number']:02d}_cover_letter_autofill.png"
             return await self.take_screenshot(page, slide_data, filename)
