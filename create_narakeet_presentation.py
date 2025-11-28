@@ -1,13 +1,7 @@
 #!/usr/bin/env python3
 """
 Create PowerPoint presentation with screenshots and notes for Narakeet
-This script will:
-1. Log in with provided credentials
-2. Navigate to correct pages and verify by title/URL
-3. Upload sample context file
-4. Mask user information
-5. Take screenshots at key points
-6. Create a PowerPoint presentation with aligned notes
+This script will navigate through all sidebar sections and capture appropriate screenshots
 """
 
 import asyncio
@@ -17,8 +11,8 @@ from playwright.async_api import async_playwright
 from pptx import Presentation
 from pptx.util import Inches, Pt
 from pptx.enum.text import PP_ALIGN
-from PIL import Image, ImageDraw, ImageFont
-import io
+from PIL import Image, ImageDraw
+import time
 
 class NarakeetPresentationCreator:
     def __init__(self, script_file, base_url="https://careerpilotconsulting.com", output_dir="narakeet_assets"):
@@ -34,6 +28,7 @@ class NarakeetPresentationCreator:
         self.test_password = "career123"
         self.is_logged_in = False
         self.sample_context_file = Path(__file__).parent / "sample_career_context.md"
+        self.sample_resume_file = Path(__file__).parent / "sample_resume.txt"
         
     def parse_script(self):
         """Parse markdown script to extract sections with narration"""
@@ -49,7 +44,7 @@ class NarakeetPresentationCreator:
                 section_title = sections[i].strip()
                 section_content = sections[i + 1]
                 
-                # Skip sign up section - we won't capture it
+                # Skip sign up section
                 if 'sign up' in section_title.lower():
                     continue
                 
@@ -67,7 +62,7 @@ class NarakeetPresentationCreator:
                 if visual_match:
                     visual_description = visual_match.group(1).strip()
                 
-                # Extract actions to determine what to screenshot
+                # Extract actions
                 actions_match = re.search(r'\*\*Actions\*\*:\s*\n((?:- .+\n?)+)', section_content)
                 actions = []
                 if actions_match:
@@ -84,25 +79,9 @@ class NarakeetPresentationCreator:
         
         return slides
     
-    async def wait_for_page_title(self, page, expected_keywords, timeout=10000):
-        """Wait for page title to contain expected keywords"""
-        try:
-            await page.wait_for_function(
-                f"""
-                () => {{
-                    const title = document.title.toLowerCase();
-                    const keywords = {expected_keywords};
-                    return keywords.some(k => title.includes(k.toLowerCase()));
-                }}
-                """,
-                timeout=timeout
-            )
-            return True
-        except:
-            return False
-    
     async def verify_page(self, page, expected_path, expected_keywords=None):
         """Verify we're on the correct page"""
+        await page.wait_for_timeout(2000)
         current_url = page.url.lower()
         page_title = (await page.title()).lower()
         
@@ -118,6 +97,7 @@ class NarakeetPresentationCreator:
                 print(f"⚠️  Title mismatch: expected keywords {expected_keywords}, got '{page_title}'")
                 return False
         
+        print(f"✅ Verified: {page_title} - {current_url}")
         return True
     
     async def login(self, page):
@@ -129,7 +109,7 @@ class NarakeetPresentationCreator:
             await page.wait_for_load_state('networkidle')
             await page.wait_for_timeout(2000)
             
-            # Make sure we're on sign in tab
+            # Click sign in tab
             try:
                 sign_in_tab = page.locator('text=Sign in, button:has-text("Sign in")').first
                 if await sign_in_tab.count() > 0:
@@ -150,26 +130,21 @@ class NarakeetPresentationCreator:
             # Submit
             submit_button = page.locator('button[type="submit"]:has-text("Sign in"), button:has-text("Sign in")').first
             await submit_button.click()
-            await page.wait_for_timeout(5000)  # Wait for redirect
+            await page.wait_for_timeout(5000)
             
-            # Verify we're on dashboard
             if await self.verify_page(page, '/dashboard', ['dashboard', 'careerpilot']):
                 print("✅ Logged in successfully")
                 self.is_logged_in = True
                 return True
             else:
-                # Try waiting a bit more
                 await page.wait_for_timeout(3000)
                 if '/dashboard' in page.url.lower():
                     print("✅ Logged in successfully (after wait)")
                     self.is_logged_in = True
                     return True
-                print(f"⚠️  Login verification failed. Current URL: {page.url}")
                 return False
         except Exception as e:
             print(f"⚠️  Login error: {e}")
-            import traceback
-            traceback.print_exc()
             return False
     
     async def upload_sample_context(self, page):
@@ -180,11 +155,10 @@ class NarakeetPresentationCreator:
         
         try:
             print("📤 Uploading sample context file...")
-            # Find file input
             file_input = page.locator('input[type="file"]').first
             if await file_input.count() > 0:
                 await file_input.set_input_files(str(self.sample_context_file))
-                await page.wait_for_timeout(2000)  # Wait for upload
+                await page.wait_for_timeout(3000)  # Wait for upload
                 print("✅ Sample context uploaded")
                 return True
             else:
@@ -194,16 +168,44 @@ class NarakeetPresentationCreator:
             print(f"⚠️  Upload error: {e}")
             return False
     
+    async def analyze_resume(self, page):
+        """Paste resume and click analyze"""
+        if not self.sample_resume_file.exists():
+            print(f"⚠️  Sample resume file not found: {self.sample_resume_file}")
+            return False
+        
+        try:
+            print("📝 Pasting resume and analyzing...")
+            # Read resume content
+            with open(self.sample_resume_file, 'r', encoding='utf-8') as f:
+                resume_text = f.read()
+            
+            # Find textarea or input for resume
+            resume_input = page.locator('textarea, input[type="text"]').first
+            if await resume_input.count() > 0:
+                await resume_input.fill(resume_text)
+                await page.wait_for_timeout(1000)
+                
+                # Click analyze button
+                analyze_button = page.locator('button:has-text("Analyze"), button:has-text("analyze")').first
+                if await analyze_button.count() > 0:
+                    await analyze_button.click()
+                    await page.wait_for_timeout(4000)  # Wait for analysis
+                    print("✅ Resume analyzed")
+                    return True
+            return False
+        except Exception as e:
+            print(f"⚠️  Resume analysis error: {e}")
+            return False
+    
     def mask_user_info(self, image_path):
         """Mask email/user information in screenshot"""
         try:
             img = Image.open(image_path)
             draw = ImageDraw.Draw(img)
-            
             width, height = img.size
-            # Mask top-right area (where user info often is)
+            # Mask top-right area
             draw.rectangle([width - 300, 0, width, 100], fill='white', outline='white')
-            
             img.save(image_path)
             return True
         except Exception as e:
@@ -213,48 +215,36 @@ class NarakeetPresentationCreator:
     async def take_screenshot(self, page, slide_data, filename):
         """Take a screenshot and mask user info"""
         screenshot_path = self.screenshots_dir / filename
-        await page.wait_for_timeout(2000)  # Wait for any animations/loading
+        await page.wait_for_timeout(2000)
         await page.screenshot(path=str(screenshot_path), full_page=True)
-        
-        # Mask user information
         self.mask_user_info(screenshot_path)
-        
         print(f"📸 Screenshot saved: {screenshot_path}")
         return screenshot_path
     
     async def navigate_and_screenshot(self, page, slide_data):
         """Navigate to the appropriate page, verify it, and take screenshot"""
         title_lower = slide_data['title'].lower()
-        actions = slide_data.get('actions', [])
-        actions_str = ' '.join(actions).lower()
         
-        # Ensure we're logged in for dashboard pages
-        if 'dashboard' in title_lower or 'upload' in title_lower or 'context' in title_lower or 'generator' in title_lower or 'help' in title_lower or 'closing' in title_lower:
-            if not self.is_logged_in:
-                await self.login(page)
-                await page.wait_for_timeout(3000)
+        # Ensure logged in
+        if not self.is_logged_in:
+            await self.login(page)
+            await page.wait_for_timeout(3000)
         
-        # Determine what page/action to show based on title
-        if 'introduction' in title_lower or ('landing' in title_lower and 'sign up' not in title_lower):
+        # 1. Introduction - Landing page
+        if 'introduction' in title_lower or 'landing' in title_lower:
             await page.goto(self.base_url)
             await page.wait_for_load_state('networkidle')
             await page.wait_for_timeout(2000)
-            if not await self.verify_page(page, '/', ['careerpilot', 'career']):
-                print("⚠️  Not on landing page, but continuing...")
             filename = f"slide_{slide_data['section_number']:02d}_landing.png"
             return await self.take_screenshot(page, slide_data, filename)
         
-        elif 'upload' in title_lower or 'context' in title_lower:
-            if not self.is_logged_in:
-                await self.login(page)
-            
+        # 2. Home - Upload Career Context
+        elif 'home' in title_lower or ('upload' in title_lower and 'context' in title_lower):
             await page.goto(f"{self.base_url}/dashboard")
             await page.wait_for_load_state('networkidle')
             await page.wait_for_timeout(3000)
             
-            # Verify we're on dashboard
             if not await self.verify_page(page, '/dashboard', ['dashboard']):
-                print("⚠️  Not on dashboard, retrying...")
                 await page.goto(f"{self.base_url}/dashboard")
                 await page.wait_for_load_state('networkidle')
                 await page.wait_for_timeout(3000)
@@ -263,24 +253,38 @@ class NarakeetPresentationCreator:
             await page.evaluate("window.scrollTo(0, document.body.scrollHeight * 0.6)")
             await page.wait_for_timeout(2000)
             
-            # Upload sample context file
+            # Upload sample context
             await self.upload_sample_context(page)
             await page.wait_for_timeout(2000)
             
             filename = f"slide_{slide_data['section_number']:02d}_upload.png"
             return await self.take_screenshot(page, slide_data, filename)
         
-        elif 'generator' in title_lower or 'cover letter' in title_lower:
-            if not self.is_logged_in:
-                await self.login(page)
+        # 3. Resume Builder - Analyze Resume
+        elif 'resume builder' in title_lower or ('resume' in title_lower and 'analyze' in title_lower):
+            await page.goto(f"{self.base_url}/resume-builder")
+            await page.wait_for_load_state('networkidle')
+            await page.wait_for_timeout(3000)
             
+            if not await self.verify_page(page, '/resume-builder', ['resume', 'builder']):
+                await page.goto(f"{self.base_url}/resume-builder")
+                await page.wait_for_load_state('networkidle')
+                await page.wait_for_timeout(3000)
+            
+            # Paste resume and analyze
+            await self.analyze_resume(page)
+            await page.wait_for_timeout(2000)
+            
+            filename = f"slide_{slide_data['section_number']:02d}_resume_builder.png"
+            return await self.take_screenshot(page, slide_data, filename)
+        
+        # 4. Generator - Cover Letter with Auto-Fill
+        elif 'cover letter' in title_lower and 'auto-fill' in title_lower:
             await page.goto(f"{self.base_url}/generator")
             await page.wait_for_load_state('networkidle')
             await page.wait_for_timeout(3000)
             
-            # Verify we're on generator page
             if not await self.verify_page(page, '/generator', ['generator']):
-                print("⚠️  Not on generator page, retrying...")
                 await page.goto(f"{self.base_url}/generator")
                 await page.wait_for_load_state('networkidle')
                 await page.wait_for_timeout(3000)
@@ -294,108 +298,99 @@ class NarakeetPresentationCreator:
             except:
                 pass
             
-            filename = f"slide_{slide_data['section_number']:02d}_generator.png"
-            return await self.take_screenshot(page, slide_data, filename)
-        
-        elif 'auto-fill' in title_lower or ('url' in title_lower and 'cover letter' in title_lower):
-            if not self.is_logged_in:
-                await self.login(page)
-            
-            await page.goto(f"{self.base_url}/generator")
-            await page.wait_for_load_state('networkidle')
-            await page.wait_for_timeout(3000)
-            
-            # Verify we're on generator page
-            if not await self.verify_page(page, '/generator', ['generator']):
-                await page.goto(f"{self.base_url}/generator")
-                await page.wait_for_load_state('networkidle')
-                await page.wait_for_timeout(3000)
-            
+            # Fill in URL and auto-fill
             try:
-                # Select cover letter mode
-                mode_select = page.locator('select[name="mode"]').first
-                if await mode_select.count() > 0:
-                    await mode_select.select_option('cover-letter')
-                    await page.wait_for_timeout(2000)
-                
-                # Fill in a sample URL
                 url_input = page.locator('input[type="url"]').first
                 if await url_input.count() > 0:
                     await url_input.fill('https://www.linkedin.com/jobs/view/example')
-                    await page.wait_for_timeout(1500)
+                    await page.wait_for_timeout(1000)
+                    
+                    # Click auto-fill button
+                    autofill_button = page.locator('button:has-text("Auto-fill"), button:has-text("auto-fill")').first
+                    if await autofill_button.count() > 0:
+                        await autofill_button.click()
+                        await page.wait_for_timeout(3000)  # Wait for auto-fill
             except:
                 pass
             
-            filename = f"slide_{slide_data['section_number']:02d}_autofill.png"
+            filename = f"slide_{slide_data['section_number']:02d}_cover_letter_autofill.png"
             return await self.take_screenshot(page, slide_data, filename)
         
-        elif 'star story' in title_lower:
-            if not self.is_logged_in:
-                await self.login(page)
-            
+        # 5. Generator - Application Answer & Networking Blurb
+        elif 'application answer' in title_lower or 'networking blurb' in title_lower:
             await page.goto(f"{self.base_url}/generator")
             await page.wait_for_load_state('networkidle')
             await page.wait_for_timeout(3000)
             
-            # Verify we're on generator page
             if not await self.verify_page(page, '/generator', ['generator']):
                 await page.goto(f"{self.base_url}/generator")
                 await page.wait_for_load_state('networkidle')
                 await page.wait_for_timeout(3000)
             
+            # Try to switch to application answer or networking blurb mode
             try:
                 mode_select = page.locator('select[name="mode"]').first
                 if await mode_select.count() > 0:
-                    await mode_select.select_option('star-story')
-                    await page.wait_for_timeout(2000)
+                    # Try networking blurb first
+                    try:
+                        await mode_select.select_option('networking-blurb')
+                        await page.wait_for_timeout(2000)
+                    except:
+                        # Fallback to application answer
+                        await mode_select.select_option('job-application-answer')
+                        await page.wait_for_timeout(2000)
             except:
                 pass
             
-            filename = f"slide_{slide_data['section_number']:02d}_star_story.png"
+            filename = f"slide_{slide_data['section_number']:02d}_application_networking.png"
             return await self.take_screenshot(page, slide_data, filename)
         
-        elif 'help' in title_lower or 'faq' in title_lower:
-            if not self.is_logged_in:
-                await self.login(page)
+        # 6. LinkedIn Optimizer
+        elif 'linkedin optimizer' in title_lower or 'linkedin' in title_lower:
+            await page.goto(f"{self.base_url}/linkedin-optimizer")
+            await page.wait_for_load_state('networkidle')
+            await page.wait_for_timeout(3000)
             
+            if not await self.verify_page(page, '/linkedin-optimizer', ['linkedin', 'optimizer']):
+                await page.goto(f"{self.base_url}/linkedin-optimizer")
+                await page.wait_for_load_state('networkidle')
+                await page.wait_for_timeout(3000)
+            
+            filename = f"slide_{slide_data['section_number']:02d}_linkedin_optimizer.png"
+            return await self.take_screenshot(page, slide_data, filename)
+        
+        # 7. Help & FAQ
+        elif 'help' in title_lower or 'faq' in title_lower:
             await page.goto(f"{self.base_url}/dashboard")
             await page.wait_for_load_state('networkidle')
             await page.wait_for_timeout(3000)
             
-            # Verify we're on dashboard
-            if not await self.verify_page(page, '/dashboard', ['dashboard']):
-                await page.goto(f"{self.base_url}/dashboard")
-                await page.wait_for_load_state('networkidle')
-                await page.wait_for_timeout(3000)
-            
             # Try to open help sidebar
             try:
-                help_button = page.locator('text=Help, button:has-text("Help"), .app-shell__help-button, [class*="help"]').first
-                if await help_button.count() > 0:
-                    await help_button.click()
-                    await page.wait_for_timeout(3000)  # Wait for sidebar to open
-                else:
-                    print("⚠️  Help button not found")
-            except Exception as e:
-                print(f"⚠️  Could not click help button: {e}")
+                help_selectors = [
+                    'text=Help',
+                    'button:has-text("Help")',
+                    '.app-shell__help-button',
+                    '[class*="help"]',
+                    'text=Help & FAQ'
+                ]
+                for selector in help_selectors:
+                    help_button = page.locator(selector).first
+                    if await help_button.count() > 0:
+                        await help_button.click()
+                        await page.wait_for_timeout(3000)
+                        break
+            except:
+                pass
             
             filename = f"slide_{slide_data['section_number']:02d}_help.png"
             return await self.take_screenshot(page, slide_data, filename)
         
+        # 8. Closing - Dashboard
         else:
-            # Default: dashboard overview (closing)
-            if not self.is_logged_in:
-                await self.login(page)
-            
             await page.goto(f"{self.base_url}/dashboard")
             await page.wait_for_load_state('networkidle')
             await page.wait_for_timeout(3000)
-            
-            # Verify we're on dashboard
-            if not await self.verify_page(page, '/dashboard', ['dashboard']):
-                await page.goto(f"{self.base_url}/dashboard")
-                await page.wait_for_load_state('networkidle')
-                await page.wait_for_timeout(3000)
             
             filename = f"slide_{slide_data['section_number']:02d}_dashboard.png"
             return await self.take_screenshot(page, slide_data, filename)
@@ -403,7 +398,7 @@ class NarakeetPresentationCreator:
     async def capture_all_screenshots(self):
         """Navigate app and capture all screenshots"""
         slides = self.parse_script()
-        print(f"📝 Found {len(slides)} slides to create (signup skipped)")
+        print(f"📝 Found {len(slides)} slides to create")
         
         async with async_playwright() as p:
             browser = await p.chromium.launch(headless=False)
@@ -416,7 +411,7 @@ class NarakeetPresentationCreator:
                 print(f"🌐 Starting screenshot capture...")
                 print(f"🌐 Connecting to {self.base_url}\n")
                 
-                # Login first (but don't screenshot it)
+                # Login first
                 await self.login(page)
                 await page.wait_for_timeout(3000)
                 
@@ -426,7 +421,7 @@ class NarakeetPresentationCreator:
                     screenshot_path = await self.navigate_and_screenshot(page, slide_data)
                     slide_data['screenshot_path'] = screenshot_path
                     self.slides_data.append(slide_data)
-                    await page.wait_for_timeout(2000)  # Pause between screenshots
+                    await page.wait_for_timeout(2000)
                 
                 print(f"\n✅ All screenshots captured!")
                 
@@ -446,8 +441,7 @@ class NarakeetPresentationCreator:
         print(f"\n📊 Creating PowerPoint presentation...")
         
         for slide_data in self.slides_data:
-            # Create slide
-            slide = prs.slides.add_slide(prs.slide_layouts[6])  # Blank layout
+            slide = prs.slides.add_slide(prs.slide_layouts[6])
             
             # Add title
             if slide_data.get('title'):
@@ -463,45 +457,38 @@ class NarakeetPresentationCreator:
             screenshot_path = slide_data.get('screenshot_path')
             if screenshot_path and Path(screenshot_path).exists():
                 try:
-                    # Calculate dimensions to fit slide (leave space for title)
                     img_left = Inches(0.5)
                     img_top = Inches(1.2)
                     img_width = Inches(9)
                     img_height = Inches(5.5)
-                    
                     slide.shapes.add_picture(str(screenshot_path), img_left, img_top, img_width, img_height)
                 except Exception as e:
                     print(f"⚠️  Could not add image {screenshot_path}: {e}")
             
-            # Add speaker notes (narration) - aligned with screenshot
+            # Add speaker notes
             if slide_data.get('narration'):
                 notes_slide = slide.notes_slide
                 notes_text_frame = notes_slide.notes_text_frame
                 notes_text_frame.text = slide_data['narration']
         
-        # Save presentation
         output_path = self.output_dir / "CareerPilot_Demo_Narakeet.pptx"
         prs.save(str(output_path))
         print(f"✅ PowerPoint saved: {output_path}")
-        
         return output_path
     
     def create_notes_file(self):
-        """Create a separate text file with all notes for reference"""
+        """Create notes file"""
         notes_path = self.output_dir / "Narakeet_Notes.txt"
         
         with open(notes_path, 'w', encoding='utf-8') as f:
             f.write("CareerPilot Consulting - Demo Video Notes\n")
             f.write("=" * 60 + "\n\n")
-            f.write("Speaker Notes for Narakeet Slides to Video\n\n")
             
             for i, slide_data in enumerate(self.slides_data, 1):
                 f.write(f"\nSlide {i}: {slide_data['title']}\n")
                 f.write("-" * 60 + "\n")
                 if slide_data.get('narration'):
                     f.write(f"Notes: {slide_data['narration']}\n")
-                if slide_data.get('visual'):
-                    f.write(f"Visual: {slide_data['visual']}\n")
                 f.write(f"Screenshot: {slide_data.get('screenshot_path', 'N/A')}\n")
                 f.write("\n")
         
@@ -517,15 +504,14 @@ def main():
     
     print("🎬 Narakeet Presentation Creator")
     print("=" * 60)
-    print("\nThis script will:")
-    print("1. Log in to careerpilotconsulting.com")
-    print("2. Verify page titles/URLs match expected sections")
-    print("3. Upload sample context file")
-    print("4. Mask user information in screenshots")
-    print("5. Take screenshots at key points")
-    print("6. Create PowerPoint with screenshots and speaker notes")
-    print("7. Ready to upload to Narakeet Slides to Video\n")
-    print("⚠️  Note: Sign up screenshot will be skipped\n")
+    print("\nThis script will navigate through all sidebar sections:")
+    print("1. Home - Upload Career Context")
+    print("2. Resume Builder - Analyze Resume")
+    print("3. Generator - Cover Letter with Auto-Fill")
+    print("4. Generator - Application Answer & Networking Blurb")
+    print("5. LinkedIn Optimizer")
+    print("6. Help & FAQ")
+    print("7. Closing\n")
     
     response = input("Ready to start? (y/n): ")
     if response.lower() != 'y':
@@ -534,19 +520,15 @@ def main():
     
     creator = NarakeetPresentationCreator(script_file)
     
-    # Step 1: Capture screenshots
     print("\n" + "=" * 60)
     print("STEP 1: Capturing Screenshots")
     print("=" * 60)
     asyncio.run(creator.capture_all_screenshots())
     
-    # Step 2: Create PowerPoint
     print("\n" + "=" * 60)
     print("STEP 2: Creating PowerPoint")
     print("=" * 60)
     ppt_path = creator.create_powerpoint()
-    
-    # Step 3: Create notes file
     notes_path = creator.create_notes_file()
     
     print("\n" + "=" * 60)
@@ -555,13 +537,7 @@ def main():
     print(f"\n📁 Files created in: {creator.output_dir}/")
     print(f"   - PowerPoint: {ppt_path.name}")
     print(f"   - Notes: {notes_path.name}")
-    print(f"   - Screenshots: {creator.screenshots_dir.name}/")
-    print(f"\n📤 Next Steps:")
-    print(f"   1. Go to https://www.narakeet.com")
-    print(f"   2. Choose 'Slides to Video' option")
-    print(f"   3. Upload: {ppt_path.name}")
-    print(f"   4. Narakeet will use the speaker notes for narration")
-    print(f"   5. Generate your video!")
+    print(f"\n📤 Upload to Narakeet and generate your video!")
 
 if __name__ == "__main__":
     main()

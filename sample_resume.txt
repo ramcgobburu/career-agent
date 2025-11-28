@@ -1,0 +1,41 @@
+JOHN DOE
+Senior Product Manager
+Email: john.doe@email.com | Phone: (555) 123-4567 | LinkedIn: linkedin.com/in/johndoe
+
+PROFESSIONAL SUMMARY
+Experienced Product Manager with 8+ years of experience leading cross-functional teams to deliver innovative software products. Proven track record of increasing user engagement by 45% and driving $5M+ in revenue through data-driven product decisions. Expertise in AI/ML products, agile methodologies, and stakeholder management.
+
+WORK EXPERIENCE
+
+Senior Product Manager | TechCorp Inc. | San Francisco, CA | 2020 - Present
+• Led product strategy for AI-powered analytics platform serving 100,000+ enterprise users
+• Increased monthly active users by 45% through feature optimization and user research
+• Managed product roadmap for 3 product lines, coordinating with engineering, design, and data science teams
+• Launched 5 major features that generated $5M in annual recurring revenue
+• Conducted 50+ user interviews to inform product decisions and prioritize features
+
+Product Manager | StartupXYZ | San Francisco, CA | 2018 - 2020
+• Built product roadmap for B2B SaaS platform from concept to launch, achieving 300% growth in first year
+• Collaborated with engineering team of 12 to deliver features on time and within budget
+• Implemented A/B testing framework that improved conversion rates by 25%
+• Managed product backlog and sprint planning using Agile/Scrum methodologies
+
+Software Engineer | BigTech Co. | Mountain View, CA | 2015 - 2018
+• Developed microservices architecture handling 2M+ requests per day
+• Reduced system latency by 40% through performance optimization
+• Mentored 3 junior engineers and conducted code reviews
+• Contributed to open-source projects with 1,000+ GitHub stars
+
+EDUCATION
+Master of Science in Computer Science | Stanford University | 2015
+Bachelor of Science in Software Engineering | UC Berkeley | 2013
+
+SKILLS
+Product Management: Roadmapping, User Research, Analytics, A/B Testing, Agile/Scrum
+Technical: Python, JavaScript, SQL, AWS, Docker, Kubernetes
+Tools: Jira, Confluence, Figma, Mixpanel, Google Analytics
+
+CERTIFICATIONS
+• Certified Scrum Product Owner (CSPO)
+• AWS Certified Solutions Architect
+

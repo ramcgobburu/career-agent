@@ -1,7 +1,7 @@
 # CareerPilot Consulting - Demo Video Script
 
 ## Overview
-This document provides a script and guide for creating a demo video showcasing the CareerPilot Consulting application. The video should be approximately 3-5 minutes long and demonstrate the key features of the platform.
+This document provides a script and guide for creating a demo video showcasing the CareerPilot Consulting application. The video should be approximately 5-6 minutes long and demonstrate all key features of the platform.
 
 ## Video Structure
 
@@ -13,79 +13,102 @@ This document provides a script and guide for creating a demo video showcasing t
 **Actions**:
 - Show the landing page with the hero section
 - Highlight the three key features: "Context-aware", "Multiple document types", and "Smart parsing"
-- Briefly show the sign-up form
 
-### 2. Sign Up & Dashboard (0:30 - 1:00)
-**Visual**: Sign up process and dashboard
+---
+
+### 2. Home - Upload Career Context (0:30 - 1:30)
+**Visual**: Dashboard/Home page showing upload section
 **Narration**:
-> "Getting started is easy. Sign up with your email or Google account, and you'll land on your dashboard."
+> "Let's start by uploading your career context. This is crucial - upload everything from day one of your career. Include your resume, previous cover letters, project descriptions, achievements, and any career-related documents. The more comprehensive your context, the more effective the AI will be at creating personalized materials that truly represent your experience."
 
 **Actions**:
-- Show sign-up form (can use demo account)
-- Navigate to dashboard
-- Show the clean, modern interface
-- Point out the sidebar navigation
+- Navigate to Home/Dashboard
+- Show the "Add to existing context" section
+- Upload the sample career context markdown file
+- Show the file appearing in the context list
+- Explain that multiple files can be uploaded
 
-### 3. Upload Career Context (1:00 - 1:45)
-**Visual**: Uploading a resume/career document
+---
+
+### 3. Resume Builder - Analyze Resume (1:30 - 2:30)
+**Visual**: Resume Builder page with resume analysis
 **Narration**:
-> "The first step is to upload your career context - this could be your resume, previous cover letters, or any career-related documents. The AI uses this to personalize all generated materials. You can upload PDF, Word, or text files."
+> "Next, let's use the Resume Builder. Simply paste your resume, and CareerPilot will analyze it to provide valuable insights. It will identify strengths, suggest improvements, and help you optimize your resume for better results."
 
 **Actions**:
-- Click on "Add to existing context" section
-- Select a file (PDF or DOCX)
-- Show the upload process
-- Show the context appearing in the list
-- Mention that multiple files can be uploaded
+- Navigate to Resume Builder
+- Paste the sample resume
+- Click "Analyze Resume" button
+- Show the analysis output with insights and suggestions
+- Highlight key insights displayed
 
-### 4. Generate Cover Letter (1:45 - 3:00)
-**Visual**: Using the generator to create a cover letter
+---
+
+### 4. Generator - Cover Letter with Auto-Fill (2:30 - 3:30)
+**Visual**: Generator page with cover letter mode and URL auto-fill
 **Narration**:
-> "Now let's generate a personalized cover letter. Navigate to the Generator, and select 'Cover Letter' from the mode dropdown. Here's the smart part - you can paste a job posting URL, and CareerPilot will automatically extract the company name, role title, and job description using AI."
+> "Now let's generate a personalized cover letter. Navigate to the Generator and select 'Cover Letter' mode. Here's the smart part - paste a job posting URL, and CareerPilot's AI will automatically parse the page, extract the company name, role title, and job description. Watch as it fills in all the details for you."
 
 **Actions**:
 - Navigate to Generator page
-- Select "Cover Letter" mode
-- Paste a job posting URL (e.g., LinkedIn, company career page)
+- Select "Cover Letter" mode from dropdown
+- Paste a job posting URL (e.g., LinkedIn job link)
 - Click "Auto-fill" button
-- Show the fields being populated automatically
-- Optionally add additional context or requirements
-- Click "Generate"
-- Show the loading state
-- Display the generated cover letter
-- Show that it's editable
-- Highlight how it's personalized to the user's career context
+- Show the fields being populated automatically: company name, role title, job description
+- Highlight how the AI intelligently extracts information
 
-### 5. Generate STAR Story (3:00 - 3:45)
-**Visual**: Generating a STAR story
+---
+
+### 5. Generator - Application Answer & Networking Blurb (3:30 - 4:30)
+**Visual**: Generator page showing application answer and networking blurb
 **Narration**:
-> "You can also generate STAR stories for behavioral interview questions. Just select 'STAR Story' mode, enter a situation or question, and get a well-structured response."
+> "The Generator also helps with interview preparation. Switch to 'Application Answer' mode to get tailored responses to interview questions. And don't forget the 'Networking Blurb' feature - it creates professional, engaging messages for LinkedIn networking that help you stand out."
 
 **Actions**:
-- Change mode to "STAR Story"
-- Enter a sample question (e.g., "Tell me about a time you led a team")
-- Generate the story
-- Show the formatted output
+- Switch to "Application Answer" mode
+- Show the form and explain how it works
+- Switch to "Networking Blurb" mode
+- Show the networking blurb form
+- Explain how it creates personalized networking messages
 
-### 6. Help & FAQ (3:45 - 4:00)
-**Visual**: Opening the help sidebar
+---
+
+### 6. LinkedIn Optimizer (4:30 - 5:15)
+**Visual**: LinkedIn Optimizer page
 **Narration**:
-> "If you have questions, click the Help button in the sidebar to access frequently asked questions and get support."
+> "The LinkedIn Optimizer helps you maximize your professional presence. It analyzes your profile and provides recommendations to improve visibility, keyword optimization, and overall profile strength. This ensures recruiters and hiring managers can easily find you."
+
+**Actions**:
+- Navigate to LinkedIn Optimizer
+- Show the optimizer interface
+- Explain the optimization features
+- Show how it helps improve profile visibility
+
+---
+
+### 7. Help & FAQ (5:15 - 5:30)
+**Visual**: Help sidebar with FAQs
+**Narration**:
+> "If you have questions, click the Help button in the sidebar to access frequently asked questions and get support whenever you need it."
 
 **Actions**:
 - Click "Help & FAQ" in sidebar
 - Show the expandable FAQ items
 - Expand a couple of questions to show answers
 
-### 7. Closing (4:00 - 4:30)
+---
+
+### 8. Closing (5:30 - 6:00)
 **Visual**: Dashboard overview
 **Narration**:
-> "CareerPilot Consulting makes it easy to create professional, personalized career materials. Sign up today and take your career to the next level."
+> "CareerPilot Consulting makes it easy to create professional, personalized career materials. From uploading your career context to generating cover letters and optimizing your LinkedIn profile, we've got you covered. Sign up today and take your career to the next level."
 
 **Actions**:
 - Show a final overview of the dashboard
-- Display the call-to-action or sign-up button
+- Display the call-to-action
 - Fade to logo/website URL
+
+---
 
 ## Technical Tips for Recording
 
@@ -122,12 +145,12 @@ This document provides a script and guide for creating a demo video showcasing t
 - Job boards (Indeed, Glassdoor)
 
 ## Key Features to Emphasize
-1. ✅ Easy sign-up process
-2. ✅ Simple file upload
-3. ✅ Smart job URL parsing
+1. ✅ Comprehensive career context upload
+2. ✅ Resume analysis and insights
+3. ✅ Smart job URL parsing and auto-fill
 4. ✅ Personalized AI generation
-5. ✅ Multiple document types
-6. ✅ Editable output
+5. ✅ Multiple document types (cover letters, application answers, networking blurbs)
+6. ✅ LinkedIn profile optimization
 7. ✅ Help & FAQ support
 
 ## Post-Production Checklist
@@ -148,18 +171,19 @@ CareerPilot Consulting - Your AI Co-Pilot for Winning Career Moments
 Transform your experience into polished cover letters, STAR stories, and interview answers with AI-powered personalization.
 
 Key Features:
-• Upload your career context (resume, cover letters, etc.)
+• Upload comprehensive career context (resume, cover letters, etc.)
+• Resume Builder with AI-powered analysis and insights
 • Smart job URL parsing - automatically extracts company, role, and job description
-• Generate personalized cover letters, STAR stories, interview answers, and more
-• Context-aware AI that uses your career history
+• Generate personalized cover letters, application answers, networking blurbs, and more
+• LinkedIn Optimizer to maximize your professional presence
+• Context-aware AI that uses your complete career history
 • Support for PDF, Word, and text files
 
-Get started: [Your Website URL]
+Get started: https://careerpilotconsulting.com
 
-#CareerPilot #AICareerTools #JobSearch #CoverLetter #InterviewPrep
+#CareerPilot #AICareerTools #JobSearch #CoverLetter #InterviewPrep #LinkedInOptimizer
 ```
 
 ---
 
 **Note**: This script is a guide. Feel free to adapt it based on your specific needs, add more features, or change the flow to better showcase your application.
-
