@@ -1607,10 +1607,10 @@ input, textarea, select {
 .account {
   min-height: 100vh;
   padding: 3.5rem clamp(2rem, 6vw, 4.5rem);
-  background: radial-gradient(circle at top right, rgba(99, 102, 241, 0.4), transparent 55%),
-    radial-gradient(circle at bottom left, rgba(14, 165, 233, 0.35), transparent 45%),
-    linear-gradient(150deg, #060a18 0%, #0d1735 45%, #04070d 100%);
-  color: #e2e8f0;
+  background: radial-gradient(circle at top right, rgba(16, 185, 129, 0.06), transparent 55%),
+    radial-gradient(circle at bottom left, rgba(20, 184, 166, 0.05), transparent 45%),
+    linear-gradient(150deg, #fafaf9 0%, #f5f5f4 45%, #fafaf9 100%);
+  color: #1e293b;
   display: flex;
   flex-direction: column;
   gap: 2.5rem;
@@ -1648,7 +1648,7 @@ input, textarea, select {
 }
 
 .account__hero h1 span {
-  color: rgba(125, 211, 252, 0.9);
+  color: #059669;
 }
 
 .account__hero p {
@@ -1661,11 +1661,11 @@ input, textarea, select {
 }
 
 .account__plan-card {
-  background: rgba(14, 23, 42, 0.8);
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.8);
   border-radius: 26px;
   padding: clamp(1.75rem, 3vw, 2.4rem);
-  box-shadow: 0 30px 60px rgba(9, 16, 32, 0.45);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -1690,14 +1690,14 @@ input, textarea, select {
 }
 
 .account__panel {
-  background: rgba(13, 20, 40, 0.8);
+  background: #ffffff;
   border-radius: 24px;
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  border: 1px solid rgba(226, 232, 240, 0.8);
   padding: clamp(1.75rem, 3vw, 2.3rem);
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  box-shadow: 0 22px 55px rgba(7, 12, 26, 0.45);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
 }
 
 .account__panel h2 {
@@ -1722,9 +1722,9 @@ input, textarea, select {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  background: rgba(15, 23, 42, 0.6);
+  background: #fafaf9;
   border-radius: 16px;
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  border: 1px solid rgba(226, 232, 240, 0.8);
   padding: 0.85rem 1rem;
 }
 
@@ -1740,7 +1740,7 @@ input, textarea, select {
 }
 
 .account__context-list li span {
-  color: rgba(148, 163, 184, 0.75);
+  color: #64748b;
   font-size: 0.9rem;
 }
 
@@ -1905,10 +1905,10 @@ input, textarea, select {
 .subscription {
   min-height: 100vh;
   padding: 3.5rem clamp(2rem, 6vw, 4.5rem);
-  background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.32), transparent 55%),
-    radial-gradient(circle at bottom right, rgba(129, 140, 248, 0.3), transparent 45%),
-    linear-gradient(150deg, #070c1d 0%, #111d3f 45%, #05080f 100%);
-  color: #e2e8f0;
+  background: radial-gradient(circle at top left, rgba(16, 185, 129, 0.06), transparent 55%),
+    radial-gradient(circle at bottom right, rgba(20, 184, 166, 0.05), transparent 45%),
+    linear-gradient(150deg, #fafaf9 0%, #f5f5f4 45%, #fafaf9 100%);
+  color: #1e293b;
   display: flex;
   flex-direction: column;
   gap: 2.5rem;
@@ -1946,7 +1946,7 @@ input, textarea, select {
 }
 
 .subscription__hero h1 span {
-  color: rgba(125, 211, 252, 0.9);
+  color: #059669;
 }
 
 .subscription__hero p {
@@ -1964,22 +1964,22 @@ input, textarea, select {
 }
 
 .plan-card {
-  background: rgba(14, 23, 42, 0.82);
+  background: #ffffff;
   border-radius: 26px;
-  border: 1px solid rgba(148, 163, 184, 0.25);
+  border: 1px solid rgba(226, 232, 240, 0.8);
   padding: clamp(1.75rem, 3vw, 2.5rem);
   display: flex;
   flex-direction: column;
   gap: 1.1rem;
-  box-shadow: 0 30px 60px rgba(7, 12, 26, 0.5);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
   position: relative;
   overflow: hidden;
   transition: transform 200ms ease, box-shadow 200ms ease;
 }
 
 .plan-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 35px 65px rgba(9, 16, 32, 0.55);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
 .plan-card__header h2 {
