@@ -237,8 +237,8 @@ class UploadContextResponse(BaseModel):
     context_id: str
 
 class CoverLetterRequest(BaseModel):
-    company_name: str = Field(..., description="Name of the company")
-    role_title: str = Field(..., description="Job title/role")
+    company_name: str = Field(..., min_length=1, description="Name of the company")
+    role_title: str = Field(..., min_length=1, description="Job title/role")
     job_description: Optional[str] = Field(None, description="Job description or requirements")
     additional_context: Optional[str] = Field(None, description="Additional context to consider")
     tone: str = Field("professional", description="Tone: professional, friendly, or formal")

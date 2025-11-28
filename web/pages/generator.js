@@ -100,11 +100,22 @@ export default function Generator({ user }) {
 
       if (mode === 'cover-letter') {
         endpoint = '/api/v1/cover-letter';
+        // Validate required fields
+        if (!company || !company.trim()) {
+          setErrorMessage('Company name is required');
+          setSubmitting(false);
+          return;
+        }
+        if (!role || !role.trim()) {
+          setErrorMessage('Role title is required');
+          setSubmitting(false);
+          return;
+        }
         payload = {
-          company_name: company,
-          role_title: role,
-          job_description: jobDescription || undefined,
-          additional_context: additional || undefined,
+          company_name: company.trim(),
+          role_title: role.trim(),
+          job_description: jobDescription?.trim() || undefined,
+          additional_context: additional?.trim() || undefined,
           tone,
           length,
           format: 'text',
@@ -137,7 +148,13 @@ export default function Generator({ user }) {
 
       if (!response.ok) {
         const errorBody = await response.json().catch(() => ({}));
-        throw new Error(errorBody.detail || 'Failed to generate content');
+        const errorDetail = errorBody.detail || errorBody.message || `Server returned ${response.status}`;
+        console.error('API Error:', {
+          status: response.status,
+          statusText: response.statusText,
+          body: errorBody
+        });
+        throw new Error(errorDetail);
       }
 
       const data = await response.json();
