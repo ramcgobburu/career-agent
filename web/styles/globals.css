@@ -890,7 +890,7 @@ input, textarea, select {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.22), transparent 55%);
+  background: radial-gradient(circle at top left, rgba(16, 185, 129, 0.12), transparent 55%);
   opacity: 0;
   transition: opacity 200ms ease;
 }
@@ -994,6 +994,10 @@ input, textarea, select {
   gap: 0.85rem;
 }
 
+.append-form .input-group {
+  margin: 0;
+}
+
 .append-form textarea {
   width: 100%;
   padding: 1rem;
@@ -1013,8 +1017,8 @@ input, textarea, select {
 
 .append-form textarea:focus {
   outline: none;
-  border-color: #6366f1;
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
+  border-color: #10b981;
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.12);
 }
 
 .append-form__actions {
@@ -1174,8 +1178,8 @@ input, textarea, select {
 
 .context-form textarea:focus {
   outline: none;
-  border-color: #6366f1;
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
+  border-color: #10b981;
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.12);
 }
 
 .context-list {
@@ -1750,8 +1754,8 @@ input, textarea, select {
   gap: 2.5rem;
   padding: clamp(2.5rem, 5vw, 4.5rem);
   min-height: 100%;
-  background: radial-gradient(circle at top right, rgba(56, 189, 248, 0.12), transparent 55%),
-    radial-gradient(circle at bottom left, rgba(14, 116, 144, 0.12), transparent 50%);
+  background: radial-gradient(circle at top right, rgba(16, 185, 129, 0.08), transparent 55%),
+    radial-gradient(circle at bottom left, rgba(20, 184, 166, 0.08), transparent 50%);
 }
 
 .docs__hero span {

@@ -150,8 +150,7 @@ export default function Dashboard({ user }) {
 
     fetchProfile();
     fetchContexts();
-    fetchUsage();
-  }, [accessToken, apiBaseUrl, fetchProfile, fetchContexts, fetchUsage]);
+  }, [accessToken, apiBaseUrl, fetchProfile, fetchContexts]);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -383,9 +382,6 @@ export default function Dashboard({ user }) {
                 <div className="dashboard__usage-bar">
                   <div className="dashboard__usage-progress" style={{ width: `${usageProgress}%` }} />
                 </div>
-                <p>
-                  {profile.requests_used} of {profile.requests_limit} requests used
-                </p>
               </>
             ) : (
               <p className="muted">We’ll personalize this once your profile loads.</p>
@@ -452,36 +448,6 @@ export default function Dashboard({ user }) {
 
           </article>
 
-          <article className="panel-card panel-card--usage">
-            <div className="panel-card__header">
-              <div>
-                <h2>Activity timeline</h2>
-                <p>Stay on top of your latest generations and upcoming goals.</p>
-              </div>
-              <Link href="#" className="link disabled">
-                Manage subscription (coming soon)
-              </Link>
-            </div>
-
-            <div className="panel-card__body">
-              {loadingUsage && <p className="muted">Loading usage history…</p>}
-              {usageError && <p className="error">Unable to load usage: {usageError}</p>}
-              {trialMessage && <p className="trial-banner">{trialMessage}</p>}
-              {!loadingUsage && !usageError && usageSummary && usageSummary.recent_usage?.length > 0 && (
-                <ul className="usage-list">
-                  {usageSummary.recent_usage.map((record) => (
-                    <li key={record.id} className="usage-list__item">
-                      <span className="badge badge--endpoint">{record.endpoint}</span>
-                      <span>{formatTimestamp(record.created_at)}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              {!loadingUsage && !usageError && usageSummary && usageSummary.recent_usage?.length === 0 && (
-                <p className="muted">You have not generated any content yet.</p>
-              )}
-            </div>
-          </article>
 
           <article className="panel-card panel-card--generator">
             <div className="panel-card__header">
@@ -492,7 +458,7 @@ export default function Dashboard({ user }) {
             </div>
             <div className="panel-card__actions">
               <Link href="/generator" className="cta">
-                Open generator (beta)
+                Open generator
               </Link>
               <p className="muted">We’ll pull your latest context automatically during each session.</p>
             </div>
