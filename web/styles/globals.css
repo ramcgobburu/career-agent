@@ -159,6 +159,105 @@
   z-index: 10;
 }
 
+/* Install Prompt Styles */
+.install-prompt {
+  position: fixed;
+  bottom: 1rem;
+  left: 1rem;
+  right: 1rem;
+  z-index: 1000;
+  max-width: 400px;
+  margin: 0 auto;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.install-prompt__content {
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 16px;
+  padding: 1rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.install-prompt__icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.install-prompt__text {
+  flex: 1;
+}
+
+.install-prompt__text h3 {
+  margin: 0 0 0.25rem;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #0f172a;
+}
+
+.install-prompt__text p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.install-prompt__actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.install-prompt__install {
+  background: #0ea5e9;
+  color: #ffffff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background 150ms ease;
+}
+
+.install-prompt__install:hover {
+  background: #0284c7;
+}
+
+.install-prompt__dismiss {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0.25rem;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 150ms ease;
+}
+
+.install-prompt__dismiss:hover {
+  background: #f1f5f9;
+}
+
 @media (max-width: 960px) {
   .app-shell__sidebar {
     position: fixed;
@@ -167,6 +266,7 @@
     transform: translateX(-100%);
     transition: transform 200ms ease;
     width: clamp(240px, 65vw, 280px);
+    z-index: 100;
   }
 
   .app-shell--mobile-open .app-shell__sidebar {
@@ -184,6 +284,11 @@
   .app-shell__mobile-header {
     display: flex;
   }
+
+  .install-prompt {
+    left: 0.5rem;
+    right: 0.5rem;
+  }
 }
 :root {
   color-scheme: light;
@@ -191,6 +296,26 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-weight: 400;
+}
+
+/* Mobile optimizations */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button, a {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+input, textarea, select {
+  font-size: 16px; /* Prevents zoom on iOS */
+}
+
+@media (max-width: 640px) {
+  input, textarea, select {
+    font-size: 16px !important;
+  }
 }
 
 .landing {
@@ -201,6 +326,13 @@
     radial-gradient(circle at bottom right, rgba(124, 58, 237, 0.06), transparent 45%),
     linear-gradient(135deg, #f8fafc 0%, #e0f2fe 35%, #f1f5f9 100%);
   color: #1e293b;
+}
+
+@media (max-width: 768px) {
+  .landing {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
 }
 
 .landing__spotlight {
@@ -303,6 +435,14 @@
   gap: 1.5rem;
 }
 
+@media (max-width: 640px) {
+  .auth-card {
+    border-radius: 24px;
+    padding: 1.5rem;
+    margin: 1rem;
+  }
+}
+
 .auth-card__header h2 {
   margin: 0 0 0.5rem;
   font-size: clamp(1.9rem, 3vw, 2.35rem);
@@ -395,6 +535,16 @@
   cursor: pointer;
   transition: background 150ms ease, transform 150ms ease;
   letter-spacing: -0.01em;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+@media (max-width: 640px) {
+  .cta {
+    padding: 0.875rem 1.5rem;
+    font-size: 1rem;
+    min-height: 44px; /* Touch target size */
+  }
 }
 
 .cta:hover:not(:disabled) {
@@ -501,6 +651,22 @@
 
   .auth-card {
     margin: 0 auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard--gradient {
+    padding: 1.5rem 1rem;
+  }
+
+  .dashboard__hero-card {
+    padding: 1.5rem;
+    border-radius: 16px;
+  }
+
+  .panel-card {
+    padding: 1.5rem;
+    border-radius: 16px;
   }
 }
 
