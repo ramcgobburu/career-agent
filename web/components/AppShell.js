@@ -3,16 +3,14 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 
 const MENU_ITEMS = [
-  { label: 'Dashboard', href: '/dashboard', icon: '📊' },
-  { label: 'Generator', href: '/generator', icon: '⚡️' },
-  { label: 'Job Tracker', href: '/job-tracker', icon: '📋' },
-  { label: 'Resume Builder', href: '/resume-builder', icon: '📄' },
-  { label: 'LinkedIn Optimizer', href: '/linkedin-optimizer', icon: '💼' },
-  { label: 'Account', href: '/account', icon: '👤' },
-  { label: 'Subscription', href: '/subscription', icon: '💳' },
-  { label: 'Your docs', href: '/docs', icon: '🗂' },
-  { label: 'Settings', href: '/settings', icon: '⚙️' },
-  { label: 'Help', href: '/help', icon: '❓' },
+  { label: 'Home', href: '/dashboard' },
+  { label: 'Resume Builder', href: '/resume-builder' },
+  { label: 'Job Tracker', href: '/job-tracker' },
+  { label: 'Generator', href: '/generator' },
+  { label: 'LinkedIn Optimizer', href: '/linkedin-optimizer' },
+  { label: 'Account', href: '/account' },
+  { label: 'Subscription', href: '/subscription' },
+  { label: 'Settings', href: '/settings' },
 ];
 
 export default function AppShell({ children }) {
@@ -36,8 +34,8 @@ export default function AppShell({ children }) {
     <div className={`app-shell ${collapsed ? 'app-shell--collapsed' : ''} ${mobileOpen ? 'app-shell--mobile-open' : ''}`}>
       <aside className="app-shell__sidebar">
         <div className="app-shell__brand">
-          <span className="app-shell__logo">CA</span>
-          <span className="app-shell__title">Career-Agent</span>
+          <span className="app-shell__logo">CP</span>
+          <span className="app-shell__title">CareerPilot</span>
         </div>
         <nav className="app-shell__nav">
           <ul>
@@ -45,30 +43,14 @@ export default function AppShell({ children }) {
               const isActive = item.href !== '#' && currentPath.startsWith(item.href);
               return (
                 <li key={item.label} className={isActive ? 'active' : ''}>
-                  {item.disabled ? (
-                    <span className="app-shell__nav-item app-shell__nav-item--disabled">
-                      <span className="app-shell__nav-icon" aria-hidden="true">
-                        {item.icon}
-                      </span>
-                      <span className="app-shell__nav-label">{item.label}</span>
-                      <span className="app-shell__nav-label--hint">Coming soon</span>
-                    </span>
-                  ) : (
-                    <Link href={item.href} className="app-shell__nav-item" onClick={closeMobile}>
-                      <span className="app-shell__nav-icon" aria-hidden="true">
-                        {item.icon}
-                      </span>
-                      <span className="app-shell__nav-label">{item.label}</span>
-                    </Link>
-                  )}
+                  <Link href={item.href} className="app-shell__nav-item" onClick={closeMobile}>
+                    <span className="app-shell__nav-label">{item.label}</span>
+                  </Link>
                 </li>
               );
             })}
           </ul>
         </nav>
-        <button className="app-shell__collapse" type="button" onClick={handleToggleSidebar}>
-          {collapsed ? '→' : '←'}
-        </button>
       </aside>
 
       <div className="app-shell__main">
