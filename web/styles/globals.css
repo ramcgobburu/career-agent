@@ -36,7 +36,7 @@
   width: 36px;
   height: 36px;
   border-radius: 10px;
-  background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%);
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: #fff;
   display: inline-flex;
   align-items: center;
@@ -44,7 +44,7 @@
   font-weight: 600;
   font-size: 0.875rem;
   letter-spacing: 0;
-  box-shadow: 0 2px 8px rgba(14, 165, 233, 0.2);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
 }
 
 .app-shell__title {
@@ -82,17 +82,8 @@
 }
 
 .app-shell__nav-item:hover {
-  background: rgba(14, 165, 233, 0.08);
-  color: #0ea5e9;
-}
-
-.app-shell__nav-icon {
-  font-size: 1.125rem;
-  width: 1.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+  background: rgba(16, 185, 129, 0.08);
+  color: #059669;
 }
 
 .app-shell__nav-label {
@@ -100,8 +91,8 @@
 }
 
 .app-shell__nav li.active .app-shell__nav-item {
-  background: rgba(14, 165, 233, 0.12);
-  color: #0ea5e9;
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
   font-weight: 500;
 }
 
@@ -322,9 +313,9 @@ input, textarea, select {
   min-height: 100vh;
   display: grid;
   grid-template-columns: minmax(320px, 1.1fr) minmax(320px, 0.9fr);
-  background: radial-gradient(circle at top left, rgba(14, 165, 233, 0.08), transparent 55%),
-    radial-gradient(circle at bottom right, rgba(124, 58, 237, 0.06), transparent 45%),
-    linear-gradient(135deg, #f8fafc 0%, #e0f2fe 35%, #f1f5f9 100%);
+  background: radial-gradient(circle at top left, rgba(16, 185, 129, 0.06), transparent 55%),
+    radial-gradient(circle at bottom right, rgba(20, 184, 166, 0.05), transparent 45%),
+    linear-gradient(135deg, #fafaf9 0%, #f5f5f4 35%, #fafaf9 100%);
   color: #1e293b;
 }
 
@@ -350,9 +341,9 @@ input, textarea, select {
   gap: 0.5rem;
   font-size: 0.75rem;
   font-weight: 500;
-  color: #0ea5e9;
-  border: 1px solid rgba(14, 165, 233, 0.2);
-  background: rgba(14, 165, 233, 0.08);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  background: rgba(16, 185, 129, 0.08);
   padding: 0.4rem 0.85rem;
   border-radius: 6px;
   text-transform: uppercase;
@@ -525,7 +516,7 @@ input, textarea, select {
 }
 
 .cta {
-  background: #0ea5e9;
+  background: #10b981;
   border: none;
   color: white;
   font-size: 0.9375rem;
@@ -548,7 +539,7 @@ input, textarea, select {
 }
 
 .cta:hover:not(:disabled) {
-  background: #0284c7;
+  background: #059669;
   transform: translateY(-1px);
 }
 
@@ -740,9 +731,9 @@ input, textarea, select {
 }
 
 .dashboard--gradient {
-  background: radial-gradient(circle at top right, rgba(14, 165, 233, 0.08), transparent 55%),
-    radial-gradient(circle at bottom left, rgba(14, 165, 233, 0.06), transparent 50%),
-    linear-gradient(140deg, #f8fafc 0%, #e0f2fe 45%, #f1f5f9 100%);
+  background: radial-gradient(circle at top right, rgba(16, 185, 129, 0.06), transparent 55%),
+    radial-gradient(circle at bottom left, rgba(20, 184, 166, 0.05), transparent 50%),
+    linear-gradient(140deg, #fafaf9 0%, #f5f5f4 45%, #fafaf9 100%);
 }
 
 .dashboard__hero {
@@ -1360,10 +1351,10 @@ input, textarea, select {
   display: flex;
   flex-direction: column;
   gap: 2.5rem;
-  background: radial-gradient(circle at top left, rgba(14, 165, 233, 0.3), transparent 55%),
-    radial-gradient(circle at bottom right, rgba(129, 140, 248, 0.3), transparent 45%),
-    linear-gradient(145deg, #060b1a 0%, #131a3d 45%, #05080f 100%);
-  color: #e2e8f0;
+  background: radial-gradient(circle at top left, rgba(16, 185, 129, 0.06), transparent 55%),
+    radial-gradient(circle at bottom right, rgba(20, 184, 166, 0.05), transparent 45%),
+    linear-gradient(145deg, #fafaf9 0%, #f5f5f4 45%, #fafaf9 100%);
+  color: #1e293b;
 }
 
 .generator__header {
@@ -1380,9 +1371,9 @@ input, textarea, select {
   gap: 0.5rem;
   padding: 0.4rem 0.85rem;
   border-radius: 6px;
-  background: rgba(14, 165, 233, 0.08);
-  border: 1px solid rgba(14, 165, 233, 0.2);
-  color: #0ea5e9;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  color: #059669;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-size: 0.75rem;
@@ -1414,14 +1405,14 @@ input, textarea, select {
 }
 
 .generator__form {
-  background: rgba(14, 23, 42, 0.8);
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.8);
   border-radius: 28px;
   padding: clamp(1.75rem, 3vw, 2.5rem);
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  box-shadow: 0 30px 60px rgba(8, 15, 32, 0.45);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
 }
 
 .generator__mode {
@@ -1437,21 +1428,26 @@ input, textarea, select {
 }
 
 .generator__mode-buttons button {
-  background: rgba(15, 23, 42, 0.55);
-  border: 1px solid rgba(148, 163, 184, 0.25);
-  color: rgba(224, 231, 255, 0.85);
+  background: #f5f5f4;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  color: #64748b;
   padding: 0.6rem 1.15rem;
-  border-radius: 999px;
+  border-radius: 8px;
   cursor: pointer;
-  font-weight: 600;
+  font-weight: 500;
   transition: background 180ms ease, transform 180ms ease, border 180ms ease;
 }
 
+.generator__mode-buttons button:hover {
+  background: #e7e5e4;
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
 .generator__mode-buttons button.active {
-  background: linear-gradient(135deg, #38bdf8 0%, #6366f1 100%);
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   border-color: transparent;
-  color: #f8fafc;
-  box-shadow: 0 15px 40px rgba(99, 102, 241, 0.35);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
 }
 
 .generator__form label {
@@ -1466,9 +1462,9 @@ input, textarea, select {
   width: 100%;
   padding: 0.85rem 1rem;
   border-radius: 16px;
-  border: 1px solid rgba(148, 163, 184, 0.3);
-  background: rgba(8, 14, 32, 0.65);
-  color: #f8fafc;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  background: #ffffff;
+  color: #1e293b;
   font-size: 1rem;
   transition: border 160ms ease, box-shadow 160ms ease;
   font-family: inherit;
@@ -1482,8 +1478,8 @@ input, textarea, select {
 .generator__form textarea:focus,
 .generator__form select:focus {
   outline: none;
-  border-color: rgba(99, 102, 241, 0.8);
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+  border-color: #10b981;
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
 }
 
 .generator__inline {
@@ -1505,11 +1501,11 @@ input, textarea, select {
 
 .generator__result-card,
 .generator__tips {
-  background: rgba(8, 15, 32, 0.7);
+  background: #ffffff;
   border-radius: 26px;
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  border: 1px solid rgba(226, 232, 240, 0.8);
   padding: clamp(1.5rem, 3vw, 2rem);
-  box-shadow: 0 24px 55px rgba(10, 18, 35, 0.5);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -1517,7 +1513,7 @@ input, textarea, select {
 
 .generator__result-card h2 {
   margin: 0;
-  color: #f8fafc;
+  color: #0f172a;
 }
 
 .generator__result-meta {
@@ -1529,11 +1525,11 @@ input, textarea, select {
 }
 
 .generator__result {
-  background: rgba(15, 23, 42, 0.6);
+  background: #fafaf9;
   border-radius: 18px;
-  border: 1px solid rgba(148, 163, 184, 0.18);
+  border: 1px solid rgba(226, 232, 240, 0.8);
   padding: 1.25rem;
-  color: rgba(226, 232, 240, 0.92);
+  color: #1e293b;
   white-space: pre-wrap;
   line-height: 1.6;
   max-height: 360px;
@@ -1556,7 +1552,7 @@ input, textarea, select {
 
 .generator__tips h3 {
   margin: 0;
-  color: rgba(224, 231, 255, 0.92);
+  color: #0f172a;
 }
 
 .generator__tips ul {
@@ -1572,11 +1568,11 @@ input, textarea, select {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-  color: rgba(203, 213, 225, 0.75);
+  color: #64748b;
 }
 
 .generator__tips li strong {
-  color: rgba(224, 231, 255, 0.92);
+  color: #0f172a;
 }
 
 @media (max-width: 960px) {

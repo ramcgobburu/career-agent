@@ -3,14 +3,14 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 
 const MENU_ITEMS = [
-  { label: 'Home', href: '/dashboard', icon: '🏠' },
-  { label: 'Resume Builder', href: '/resume-builder', icon: '📄' },
-  { label: 'Job Tracker', href: '/job-tracker', icon: '📋' },
-  { label: 'Generator', href: '/generator', icon: '⚡' },
-  { label: 'LinkedIn Optimizer', href: '/linkedin-optimizer', icon: '💼' },
-  { label: 'Account', href: '/account', icon: '👤' },
-  { label: 'Subscription', href: '/subscription', icon: '💳' },
-  { label: 'Settings', href: '/settings', icon: '⚙️' },
+  { label: 'Home', href: '/dashboard' },
+  { label: 'Resume Builder', href: '/resume-builder' },
+  { label: 'Job Tracker', href: '/job-tracker' },
+  { label: 'Generator', href: '/generator' },
+  { label: 'LinkedIn Optimizer', href: '/linkedin-optimizer' },
+  { label: 'Account', href: '/account' },
+  { label: 'Subscription', href: '/subscription' },
+  { label: 'Settings', href: '/settings' },
 ];
 
 export default function AppShell({ children }) {
@@ -44,7 +44,6 @@ export default function AppShell({ children }) {
               return (
                 <li key={item.label} className={isActive ? 'active' : ''}>
                   <Link href={item.href} className="app-shell__nav-item" onClick={closeMobile}>
-                    <span className="app-shell__nav-icon">{item.icon}</span>
                     <span className="app-shell__nav-label">{item.label}</span>
                   </Link>
                 </li>
