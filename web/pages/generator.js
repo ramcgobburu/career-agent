@@ -157,7 +157,7 @@ export default function Generator({ user }) {
         let errorDetail = errorBody.detail || errorBody.message || errorBody.error || `Server returned ${response.status}`;
         
         // Make error messages more user-friendly
-        if (errorDetail.includes('No career context found') || errorDetail.includes('upload your career context')) {
+        if (errorDetail.includes('No career context found') || errorDetail.includes('upload your career context') || errorDetail.includes('upload-context')) {
           errorDetail = 'Please upload your career context first. Go to the home page and upload your resume or career document.';
         }
         
@@ -165,7 +165,8 @@ export default function Generator({ user }) {
           status: response.status,
           statusText: response.statusText,
           body: errorBody,
-          payload: payload
+          payload: payload,
+          errorDetail: errorDetail
         });
         throw new Error(errorDetail);
       }
@@ -173,7 +174,9 @@ export default function Generator({ user }) {
       const data = await response.json();
       setResult(data);
     } catch (error) {
-      setErrorMessage(error.message || 'Error generating content. Please try again.');
+      const message = error.message || 'Error generating content. Please try again.';
+      console.error('Error in handleSubmit:', error);
+      setErrorMessage(message);
     } finally {
       setSubmitting(false);
     }
@@ -469,7 +472,11 @@ export default function Generator({ user }) {
 
             {renderModeSpecificFields()}
 
-            {errorMessage && <p className="error">{errorMessage}</p>}
+            {errorMessage && (
+              <div className="error" role="alert">
+                {errorMessage}
+              </div>
+            )}
 
             <button type="submit" className="cta generator__submit" disabled={submitting}>
               {submitting ? 'Generating…' : 'Generate'}
