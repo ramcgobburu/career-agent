@@ -162,29 +162,19 @@ export default function Generator({ user }) {
           errorDetail = 'Please upload your career context first. Go to the home page and upload your resume or career document.';
         }
         
-        console.error('API Error:', {
-          status: response.status,
-          statusText: response.statusText,
-          body: errorBody,
-          payload: payload,
-          errorDetail: errorDetail
-        });
-        throw new Error(errorDetail);
+        // Set error message immediately and stop
+        setSubmitting(false);
+        setErrorMessage(errorDetail);
+        return;
       }
 
       const data = await response.json();
       setResult(data);
+      setErrorMessage(null); // Clear any previous errors on success
     } catch (error) {
       const message = error.message || 'Error generating content. Please try again.';
-      console.error('Error in handleSubmit:', error);
-      console.log('Setting error message to:', message);
-      // Use a function to ensure state update happens
-      setErrorMessage(() => {
-        console.log('Error message setter called with:', message);
-        return message;
-      });
-    } finally {
       setSubmitting(false);
+      setErrorMessage(message);
     }
   };
 
@@ -478,20 +468,21 @@ export default function Generator({ user }) {
 
             {renderModeSpecificFields()}
 
-            {errorMessage ? (
-              <div className="error" role="alert" style={{ 
-                display: 'block', 
-                visibility: 'visible',
+            {errorMessage && (
+              <div style={{ 
                 color: '#dc2626',
                 backgroundColor: '#fef2f2',
                 border: '1px solid #fecaca',
-                padding: '0.75rem',
-                borderRadius: '0.375rem',
-                marginTop: '0.5rem'
+                padding: '1rem',
+                borderRadius: '0.5rem',
+                marginTop: '1rem',
+                marginBottom: '1rem',
+                fontSize: '0.95rem',
+                lineHeight: '1.5'
               }}>
-                <strong>⚠️ Error:</strong> {errorMessage}
+                {errorMessage}
               </div>
-            ) : null}
+            )}
 
             <button type="submit" className="cta generator__submit" disabled={submitting}>
               {submitting ? 'Generating…' : 'Generate'}
