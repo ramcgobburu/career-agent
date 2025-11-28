@@ -769,6 +769,7 @@ async def generate_cover_letter(
     db: Session = Depends(get_db)
 ):
     """Generate a personalized cover letter."""
+    logger.info(f"Cover letter request from user {user.id}: company={request.company_name}, role={request.role_title}")
     agent = get_or_create_agent(user, db)
     
     try:

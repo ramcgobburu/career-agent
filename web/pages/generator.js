@@ -140,19 +140,26 @@ export default function Generator({ user }) {
         };
       }
 
+      console.log('Sending request:', {
+        url: `${apiBaseUrl}${endpoint}`,
+        payload,
+        headers: { ...authHeaders, 'Content-Type': 'application/json' }
+      });
+
       const response = await fetch(`${apiBaseUrl}${endpoint}`, {
         method: 'POST',
-        headers: authHeaders,
+        headers: { ...authHeaders, 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
         const errorBody = await response.json().catch(() => ({}));
-        const errorDetail = errorBody.detail || errorBody.message || `Server returned ${response.status}`;
+        const errorDetail = errorBody.detail || errorBody.message || errorBody.error || `Server returned ${response.status}`;
         console.error('API Error:', {
           status: response.status,
           statusText: response.statusText,
-          body: errorBody
+          body: errorBody,
+          payload: payload
         });
         throw new Error(errorDetail);
       }
