@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import HelpSidebar from './HelpSidebar';
 
 const MENU_ITEMS = [
   { label: 'Home', href: '/dashboard' },
@@ -17,6 +18,7 @@ export default function AppShell({ children }) {
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
 
   const currentPath = useMemo(() => router.pathname, [router.pathname]);
 
@@ -50,6 +52,16 @@ export default function AppShell({ children }) {
               );
             })}
           </ul>
+          <div className="app-shell__help-section">
+            <button
+              type="button"
+              className="app-shell__help-button"
+              onClick={() => setHelpOpen(true)}
+            >
+              <span className="app-shell__help-icon">?</span>
+              <span className="app-shell__help-label">Help & FAQ</span>
+            </button>
+          </div>
         </nav>
       </aside>
 
@@ -63,6 +75,7 @@ export default function AppShell({ children }) {
         <div className="app-shell__content">{children}</div>
       </div>
       {mobileOpen && <div className="app-shell__backdrop" onClick={closeMobile} aria-hidden="true" />}
+      <HelpSidebar isOpen={helpOpen} onClose={() => setHelpOpen(false)} />
     </div>
   );
 }

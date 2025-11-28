@@ -159,11 +159,11 @@ export default function Home() {
     }
   };
 
-  const heroStats = useMemo(
+  const heroFeatures = useMemo(
     () => [
-      { label: 'AI powered cover letters generated', value: '120K+' },
-      { label: 'Interview answers crafted', value: '45K+' },
-      { label: 'Professionals advancing careers', value: '18K+' },
+      { label: 'Personalized AI assistance', value: 'Context-aware' },
+      { label: 'Multiple document types', value: 'Cover letters, STAR stories & more' },
+      { label: 'Job URL auto-fill', value: 'Smart parsing' },
     ],
     []
   );
@@ -186,7 +186,7 @@ export default function Home() {
             Career-Agent combines personalized context with powerful AI to help you land the role you want.
           </p>
           <ul className="spotlight__stats">
-            {heroStats.map(({ label, value }) => (
+            {heroFeatures.map(({ label, value }) => (
               <li key={label}>
                 <span>{value}</span>
                 <p>{label}</p>
