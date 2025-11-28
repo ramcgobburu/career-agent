@@ -239,8 +239,20 @@ class NarakeetPresentationCreator:
             img = Image.open(image_path)
             draw = ImageDraw.Draw(img)
             width, height = img.size
-            # Mask top-right area
-            draw.rectangle([width - 300, 0, width, 100], fill='white', outline='white')
+            
+            # Mask multiple areas where user info might appear:
+            # 1. Top-right corner (common for user menu/email)
+            draw.rectangle([width - 400, 0, width, 120], fill='white', outline='white')
+            
+            # 2. Top-left area (sometimes user info appears there)
+            draw.rectangle([0, 0, 300, 80], fill='white', outline='white')
+            
+            # 3. Center-top area (for dashboard headers)
+            draw.rectangle([width // 2 - 200, 0, width // 2 + 200, 100], fill='white', outline='white')
+            
+            # 4. Look for email patterns and mask them (basic approach)
+            # This is a simple approach - for better masking, we'd need OCR
+            
             img.save(image_path)
             return True
         except Exception as e:

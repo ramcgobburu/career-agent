@@ -5,6 +5,7 @@ import HelpSidebar from './HelpSidebar';
 
 const MENU_ITEMS = [
   { label: 'Home', href: '/dashboard' },
+  { label: 'Context Manager', href: '/context-manager' },
   { label: 'Resume Builder', href: '/resume-builder' },
   { label: 'Job Tracker', href: '/job-tracker' },
   { label: 'Generator', href: '/generator' },
