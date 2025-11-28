@@ -277,6 +277,21 @@ class ResponseModel(BaseModel):
     sources: Optional[List[Dict[str, Any]]] = None
     metadata: Optional[Dict[str, Any]] = None
 
+class UserProfileResponse(BaseModel):
+    id: str
+    email: Optional[str]
+    name: Optional[str]
+    subscription_tier: str
+    subscription_status: str
+    requests_used: int
+    requests_limit: int
+    created_at: str
+    is_active: bool
+
+class UpdateUserRequest(BaseModel):
+    name: Optional[str] = Field(None, description="User's full name")
+    email: Optional[str] = Field(None, description="User's email address")
+
 
 def format_response(content: str, sources: Any, format_type: str = "text") -> str:
     """Format the response according to requested format."""
@@ -794,6 +809,107 @@ async def get_subscription_status(
         stripe_customer_id=stripe_customer_id,
         stripe_subscription_id=stripe_subscription_id
     )
+
+
+# Account Management Endpoints
+@app.get("/api/v1/me", response_model=UserProfileResponse)
+async def get_user_profile(
+    user: User = Depends(get_current_user_from_header),
+    db: Session = Depends(get_db)
+):
+    """Get current user's profile information."""
+    from database import get_usage_limit_for_tier
+    limit = get_usage_limit_for_tier(user.subscription_tier)
+    
+    return UserProfileResponse(
+        id=user.id,
+        email=user.email,
+        name=user.name,
+        subscription_tier=user.subscription_tier,
+        subscription_status=user.subscription_status,
+        requests_used=user.requests_used,
+        requests_limit=limit,
+        created_at=user.created_at.isoformat() if user.created_at else "",
+        is_active=user.is_active
+    )
+
+
+@app.put("/api/v1/me", response_model=UserProfileResponse)
+async def update_user_profile(
+    request: UpdateUserRequest,
+    user: User = Depends(get_current_user_from_header),
+    db: Session = Depends(get_db)
+):
+    """Update user's profile (name and/or email)."""
+    if request.name is not None:
+        user.name = request.name.strip() if request.name else None
+    if request.email is not None:
+        # Check if email is already taken by another user
+        existing_user = db.query(User).filter(
+            User.email == request.email.strip(),
+            User.id != user.id
+        ).first()
+        if existing_user:
+            raise HTTPException(status_code=400, detail="Email already in use")
+        user.email = request.email.strip() if request.email else None
+    
+    user.updated_at = datetime.now()
+    db.commit()
+    db.refresh(user)
+    
+    from database import get_usage_limit_for_tier
+    limit = get_usage_limit_for_tier(user.subscription_tier)
+    
+    return UserProfileResponse(
+        id=user.id,
+        email=user.email,
+        name=user.name,
+        subscription_tier=user.subscription_tier,
+        subscription_status=user.subscription_status,
+        requests_used=user.requests_used,
+        requests_limit=limit,
+        created_at=user.created_at.isoformat() if user.created_at else "",
+        is_active=user.is_active
+    )
+
+
+@app.post("/api/v1/me/pause")
+async def pause_account(
+    user: User = Depends(get_current_user_from_header),
+    db: Session = Depends(get_db)
+):
+    """Pause user account (set is_active to False)."""
+    user.is_active = False
+    user.updated_at = datetime.now()
+    db.commit()
+    
+    return {
+        "success": True,
+        "message": "Account paused successfully. You can reactivate by contacting support."
+    }
+
+
+@app.delete("/api/v1/me")
+async def delete_account(
+    user: User = Depends(get_current_user_from_header),
+    db: Session = Depends(get_db)
+):
+    """Delete user account and all associated data."""
+    # Delete all related data (cascade should handle this, but being explicit)
+    user_id = user.id
+    
+    # Clear agent cache
+    if user_id in agent_cache:
+        del agent_cache[user_id]
+    
+    # Delete user (cascade will delete contexts, usage records, etc.)
+    db.delete(user)
+    db.commit()
+    
+    return {
+        "success": True,
+        "message": "Account deleted successfully. All your data has been removed."
+    }
 
 
 @app.post("/api/v1/webhooks/stripe")

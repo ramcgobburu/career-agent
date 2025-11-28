@@ -5,10 +5,14 @@ import { useRouter } from 'next/router';
 const MENU_ITEMS = [
   { label: 'Dashboard', href: '/dashboard', icon: '📊' },
   { label: 'Generator', href: '/generator', icon: '⚡️' },
+  { label: 'Job Tracker', href: '/job-tracker', icon: '📋' },
+  { label: 'Resume Builder', href: '/resume-builder', icon: '📄' },
+  { label: 'LinkedIn Optimizer', href: '/linkedin-optimizer', icon: '💼' },
   { label: 'Account', href: '/account', icon: '👤' },
   { label: 'Subscription', href: '/subscription', icon: '💳' },
   { label: 'Your docs', href: '/docs', icon: '🗂' },
-  { label: 'Settings', href: '#', icon: '⚙️', disabled: true },
+  { label: 'Settings', href: '/settings', icon: '⚙️' },
+  { label: 'Help', href: '/help', icon: '❓' },
 ];
 
 export default function AppShell({ children }) {

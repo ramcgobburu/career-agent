@@ -1,7 +1,6 @@
 """
 FastAPI Backend Server for Career-Agent with Monetization
 Multi-tenant support with usage tracking and subscription management
-by Octan Labs
 """
 
 import os
@@ -84,7 +83,7 @@ except Exception as e:
 # Initialize FastAPI app
 app = FastAPI(
     title="Career-Agent API",
-    description="AI-powered career materials generator API with monetization | by Octan Labs",
+    description="AI-powered career materials generator API with monetization",
     version="2.0.0",
     docs_url="/docs" if not IS_PRODUCTION else None,  # Disable docs in production
     redoc_url="/redoc" if not IS_PRODUCTION else None
@@ -588,7 +587,7 @@ async def root():
 async def api_info():
     """API information endpoint."""
     return {
-        "message": "Career-Agent API | by Octan Labs",
+        "message": "Career-Agent API",
         "version": "2.0.0",
         "status": "running",
         "endpoints": {

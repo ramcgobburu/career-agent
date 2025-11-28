@@ -18,8 +18,14 @@ export default function Home() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
+  const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false);
+  const [forgotPasswordMessage, setForgotPasswordMessage] = useState('');
 
   useEffect(() => {
     if (session) {
@@ -32,6 +38,35 @@ export default function Home() {
     setView(nextView);
     setErrorMessage('');
     setPassword('');
+    setShowForgotPassword(false);
+    setForgotPasswordMessage('');
+  };
+
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    if (!email.trim()) {
+      setForgotPasswordMessage('Please enter your email address.');
+      return;
+    }
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      setForgotPasswordMessage('Enter a valid email address.');
+      return;
+    }
+
+    setForgotPasswordLoading(true);
+    setForgotPasswordMessage('');
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      setForgotPasswordMessage('Check your email for a password reset link.');
+    } catch (error) {
+      setForgotPasswordMessage(error.message || 'Something went wrong. Please try again.');
+    } finally {
+      setForgotPasswordLoading(false);
+    }
   };
 
   const validateForm = () => {
@@ -51,9 +86,11 @@ export default function Home() {
       setErrorMessage('Password must be at least 6 characters.');
       return false;
     }
-    if (view === LOGIN_VIEW.SIGN_UP && !fullName.trim()) {
-      setErrorMessage('Enter your full name so we can personalize your experience.');
-      return false;
+    if (view === LOGIN_VIEW.SIGN_UP) {
+      if (!firstName.trim() && !lastName.trim() && !fullName.trim()) {
+        setErrorMessage('Enter your name so we can personalize your experience.');
+        return false;
+      }
     }
     return true;
   };
@@ -76,12 +113,19 @@ export default function Home() {
           throw error;
         }
       } else {
+        // Use firstName/lastName if provided, otherwise use fullName
+        const displayName = firstName.trim() && lastName.trim()
+          ? `${firstName.trim()} ${lastName.trim()}`
+          : fullName.trim();
+        
         const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             data: {
-              full_name: fullName.trim(),
+              full_name: displayName,
+              first_name: firstName.trim() || '',
+              last_name: lastName.trim() || '',
             },
             emailRedirectTo: `${window.location.origin}/dashboard`,
           },
@@ -135,7 +179,7 @@ export default function Home() {
       </Head>
       <main className="landing">
         <section className="landing__spotlight">
-          <div className="spotlight__badge">Career-Agent by Octan Labs</div>
+          <div className="spotlight__badge">CareerPilot Consulting</div>
           <h1>Your AI Co-Pilot for Winning Career Moments</h1>
           <p className="spotlight__lead">
             Transform your experience into polished cover letters, STAR stories, and interview answers.
@@ -205,18 +249,103 @@ export default function Home() {
                 required
               />
 
+              {view === LOGIN_VIEW.SIGN_IN && !showForgotPassword && (
+                <button
+                  type="button"
+                  onClick={() => setShowForgotPassword(true)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#0ea5e9',
+                    cursor: 'pointer',
+                    padding: 0,
+                    marginTop: '-0.5rem',
+                    fontSize: '0.9rem',
+                    textAlign: 'right',
+                    textDecoration: 'underline',
+                  }}
+                >
+                  Forgot password?
+                </button>
+              )}
+
+              {view === LOGIN_VIEW.SIGN_IN && showForgotPassword && (
+                <div style={{ marginTop: '0.5rem' }}>
+                  <p style={{ marginBottom: '0.75rem', fontSize: '0.95rem', color: '#64748b' }}>
+                    Enter your email and we'll send you a password reset link.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowForgotPassword(false);
+                      setForgotPasswordMessage('');
+                    }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#64748b',
+                      cursor: 'pointer',
+                      padding: 0,
+                      marginBottom: '0.5rem',
+                      fontSize: '0.9rem',
+                    }}
+                  >
+                    ← Back to sign in
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleForgotPassword}
+                    className="cta"
+                    disabled={forgotPasswordLoading}
+                    style={{ width: '100%', marginTop: '0.5rem' }}
+                  >
+                    {forgotPasswordLoading ? 'Sending...' : 'Send reset link'}
+                  </button>
+                  {forgotPasswordMessage && (
+                    <p className={forgotPasswordMessage.includes('Check your email') ? 'success' : 'error'} style={{ marginTop: '0.75rem' }}>
+                      {forgotPasswordMessage}
+                    </p>
+                  )}
+                </div>
+              )}
+
               {view === LOGIN_VIEW.SIGN_UP && (
                 <>
-                  <label htmlFor="fullName">Full name</label>
-                  <input
-                    id="fullName"
-                    type="text"
-                    autoComplete="name"
-                    placeholder="Taylor Morgan"
-                    value={fullName}
-                    onChange={(event) => setFullName(event.target.value)}
-                    required
-                  />
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <div>
+                      <label htmlFor="firstName">First name</label>
+                      <input
+                        id="firstName"
+                        type="text"
+                        autoComplete="given-name"
+                        placeholder="Taylor"
+                        value={firstName}
+                        onChange={(event) => setFirstName(event.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="lastName">Last name</label>
+                      <input
+                        id="lastName"
+                        type="text"
+                        autoComplete="family-name"
+                        placeholder="Morgan"
+                        value={lastName}
+                        onChange={(event) => setLastName(event.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label htmlFor="fullName">Full name (optional)</label>
+                    <input
+                      id="fullName"
+                      type="text"
+                      autoComplete="name"
+                      placeholder="Taylor Morgan (or leave blank if using first/last)"
+                      value={fullName}
+                      onChange={(event) => setFullName(event.target.value)}
+                    />
+                  </div>
                 </>
               )}
 

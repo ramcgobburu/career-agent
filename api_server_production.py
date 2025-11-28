@@ -78,7 +78,7 @@ init_db()
 # Initialize FastAPI app
 app = FastAPI(
     title="Career-Agent API",
-    description="AI-powered career materials generator API with monetization | by Octan Labs",
+    description="AI-powered career materials generator API with monetization",
     version="2.0.0",
     docs_url="/docs" if not IS_PRODUCTION else None,  # Disable docs in production
     redoc_url="/redoc" if not IS_PRODUCTION else None
