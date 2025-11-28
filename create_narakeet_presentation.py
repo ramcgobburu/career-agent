@@ -2,10 +2,11 @@
 """
 Create PowerPoint presentation with screenshots and notes for Narakeet
 This script will:
-1. Take screenshots of the app at key points
-2. Create a PowerPoint presentation
-3. Add speaker notes with narration
-4. Ready to upload to Narakeet
+1. Log in with provided credentials
+2. Mask user information
+3. Take screenshots at key points
+4. Create a PowerPoint presentation with aligned notes
+5. Ready to upload to Narakeet
 """
 
 import asyncio
@@ -15,10 +16,11 @@ from playwright.async_api import async_playwright
 from pptx import Presentation
 from pptx.util import Inches, Pt
 from pptx.enum.text import PP_ALIGN
-import time
+from PIL import Image, ImageDraw, ImageFont
+import io
 
 class NarakeetPresentationCreator:
-    def __init__(self, script_file, base_url="http://localhost:3000", output_dir="narakeet_assets"):
+    def __init__(self, script_file, base_url="https://careerpilotconsulting.com", output_dir="narakeet_assets"):
         self.script_file = Path(script_file)
         self.base_url = base_url
         self.output_dir = Path(output_dir)
@@ -27,6 +29,9 @@ class NarakeetPresentationCreator:
         self.screenshots_dir.mkdir(exist_ok=True)
         self.screenshot_count = 0
         self.slides_data = []
+        self.test_email = "ramjee.chaitanya@gmail.com"
+        self.test_password = "career123"
+        self.is_logged_in = False
         
     def parse_script(self):
         """Parse markdown script to extract sections with narration"""
@@ -41,6 +46,10 @@ class NarakeetPresentationCreator:
             if i + 1 < len(sections):
                 section_title = sections[i].strip()
                 section_content = sections[i + 1]
+                
+                # Skip sign up section - we won't capture it
+                if 'sign up' in section_title.lower():
+                    continue
                 
                 # Extract narration
                 narration_match = re.search(r'\*\*Narration\*\*:\s*\n> (.+?)(?=\n\n|\*\*|$)', section_content, re.DOTALL)
@@ -73,10 +82,90 @@ class NarakeetPresentationCreator:
         
         return slides
     
+    async def login(self, page):
+        """Log in with provided credentials"""
+        print(f"🔐 Logging in...")
+        
+        try:
+            await page.goto(self.base_url)
+            await page.wait_for_load_state('networkidle')
+            await page.wait_for_timeout(2000)
+            
+            # Make sure we're on sign in tab
+            try:
+                sign_in_tab = page.locator('text=Sign in, button:has-text("Sign in")').first
+                if await sign_in_tab.count() > 0:
+                    await sign_in_tab.click()
+                    await page.wait_for_timeout(1000)
+            except:
+                pass
+            
+            # Fill login form
+            email_input = page.locator('input[type="email"]').first
+            await email_input.fill(self.test_email)
+            await page.wait_for_timeout(500)
+            
+            password_input = page.locator('input[type="password"]').first
+            await password_input.fill(self.test_password)
+            await page.wait_for_timeout(500)
+            
+            # Submit
+            submit_button = page.locator('button[type="submit"]:has-text("Sign in"), button:has-text("Sign in")').first
+            await submit_button.click()
+            await page.wait_for_timeout(5000)  # Wait for redirect and data to load
+            
+            if '/dashboard' in page.url or 'dashboard' in page.url.lower():
+                print("✅ Logged in successfully")
+                self.is_logged_in = True
+                return True
+            else:
+                print(f"⚠️  Current URL: {page.url}")
+                # Check if we're logged in by looking for dashboard elements
+                try:
+                    await page.wait_for_selector('.dashboard, [class*="dashboard"]', timeout=3000)
+                    print("✅ Found dashboard elements - logged in")
+                    self.is_logged_in = True
+                    return True
+                except:
+                    print("⚠️  Login might have failed, but continuing...")
+                    return False
+        except Exception as e:
+            print(f"⚠️  Login error: {e}")
+            import traceback
+            traceback.print_exc()
+            return False
+    
+    def mask_user_info(self, image_path):
+        """Mask email/user information in screenshot"""
+        try:
+            img = Image.open(image_path)
+            draw = ImageDraw.Draw(img)
+            
+            # Find and mask email addresses
+            # This is a simple approach - you might want to use OCR for better detection
+            # For now, we'll mask common locations where email might appear
+            
+            # Mask top-right area (where user info often is)
+            width, height = img.size
+            # Top right corner area
+            draw.rectangle([width - 300, 0, width, 100], fill='white', outline='white')
+            
+            # Save masked image
+            img.save(image_path)
+            return True
+        except Exception as e:
+            print(f"⚠️  Could not mask image {image_path}: {e}")
+            return False
+    
     async def take_screenshot(self, page, slide_data, filename):
-        """Take a screenshot of the current page state"""
+        """Take a screenshot and mask user info"""
         screenshot_path = self.screenshots_dir / filename
+        await page.wait_for_timeout(2000)  # Wait for any animations/loading
         await page.screenshot(path=str(screenshot_path), full_page=True)
+        
+        # Mask user information
+        self.mask_user_info(screenshot_path)
+        
         print(f"📸 Screenshot saved: {screenshot_path}")
         return screenshot_path
     
@@ -84,112 +173,140 @@ class NarakeetPresentationCreator:
         """Navigate to the appropriate page and take screenshot"""
         title_lower = slide_data['title'].lower()
         actions = slide_data.get('actions', [])
+        actions_str = ' '.join(actions).lower()
+        
+        # Ensure we're logged in for dashboard pages
+        if 'dashboard' in title_lower or 'upload' in title_lower or 'generator' in title_lower or 'help' in title_lower or 'closing' in title_lower:
+            if not self.is_logged_in:
+                await self.login(page)
+                await page.wait_for_timeout(3000)
         
         # Determine what page/action to show
-        if 'landing' in title_lower or 'introduction' in title_lower:
+        if 'introduction' in title_lower or 'landing' in title_lower:
             await page.goto(self.base_url)
             await page.wait_for_load_state('networkidle')
-            await page.wait_for_timeout(1000)
+            await page.wait_for_timeout(2000)
             filename = f"slide_{slide_data['section_number']:02d}_landing.png"
             return await self.take_screenshot(page, slide_data, filename)
         
-        elif 'sign up' in title_lower or 'sign up' in str(actions).lower():
-            await page.goto(self.base_url)
-            await page.wait_for_load_state('networkidle')
-            # Click sign up tab if exists
-            try:
-                await page.click('text=Create account', timeout=2000)
-                await page.wait_for_timeout(500)
-            except:
-                pass
-            filename = f"slide_{slide_data['section_number']:02d}_signup.png"
-            return await self.take_screenshot(page, slide_data, filename)
-        
-        elif 'dashboard' in title_lower:
+        elif 'dashboard' in title_lower and 'upload' not in title_lower and 'closing' not in title_lower:
+            if not self.is_logged_in:
+                await self.login(page)
+            
             await page.goto(f"{self.base_url}/dashboard")
             await page.wait_for_load_state('networkidle')
-            await page.wait_for_timeout(1000)
+            await page.wait_for_timeout(3000)  # Wait for data to load
             filename = f"slide_{slide_data['section_number']:02d}_dashboard.png"
             return await self.take_screenshot(page, slide_data, filename)
         
         elif 'upload' in title_lower or 'context' in title_lower:
+            if not self.is_logged_in:
+                await self.login(page)
+            
             await page.goto(f"{self.base_url}/dashboard")
             await page.wait_for_load_state('networkidle')
-            await page.wait_for_timeout(1000)
+            await page.wait_for_timeout(3000)
             # Scroll to upload section
-            await page.evaluate("window.scrollTo(0, document.body.scrollHeight / 2)")
-            await page.wait_for_timeout(500)
+            await page.evaluate("window.scrollTo(0, document.body.scrollHeight * 0.6)")
+            await page.wait_for_timeout(2000)
             filename = f"slide_{slide_data['section_number']:02d}_upload.png"
             return await self.take_screenshot(page, slide_data, filename)
         
-        elif 'generator' in title_lower or 'cover letter' in title_lower:
+        elif 'cover letter' in title_lower and 'auto-fill' not in title_lower and 'url' not in title_lower:
+            if not self.is_logged_in:
+                await self.login(page)
+            
             await page.goto(f"{self.base_url}/generator")
             await page.wait_for_load_state('networkidle')
-            await page.wait_for_timeout(1000)
-            # Select cover letter mode if needed
+            await page.wait_for_timeout(2000)
+            # Select cover letter mode
             try:
-                await page.select_option('select[name="mode"]', 'cover-letter', timeout=2000)
-                await page.wait_for_timeout(500)
+                mode_select = page.locator('select[name="mode"]').first
+                if await mode_select.count() > 0:
+                    await mode_select.select_option('cover-letter')
+                    await page.wait_for_timeout(1500)
             except:
                 pass
             filename = f"slide_{slide_data['section_number']:02d}_generator.png"
             return await self.take_screenshot(page, slide_data, filename)
         
-        elif 'auto-fill' in title_lower or 'url' in title_lower:
+        elif 'auto-fill' in title_lower or ('url' in title_lower and 'cover letter' in title_lower):
+            if not self.is_logged_in:
+                await self.login(page)
+            
             await page.goto(f"{self.base_url}/generator")
             await page.wait_for_load_state('networkidle')
+            await page.wait_for_timeout(2000)
             try:
-                await page.select_option('select[name="mode"]', 'cover-letter', timeout=2000)
-                await page.wait_for_timeout(500)
+                # Select cover letter mode
+                mode_select = page.locator('select[name="mode"]').first
+                if await mode_select.count() > 0:
+                    await mode_select.select_option('cover-letter')
+                    await page.wait_for_timeout(1500)
+                
                 # Fill in a sample URL
                 url_input = page.locator('input[type="url"]').first
                 if await url_input.count() > 0:
-                    await url_input.fill('https://example.com/job-posting')
-                    await page.wait_for_timeout(500)
+                    await url_input.fill('https://www.linkedin.com/jobs/view/example')
+                    await page.wait_for_timeout(1000)
             except:
                 pass
             filename = f"slide_{slide_data['section_number']:02d}_autofill.png"
             return await self.take_screenshot(page, slide_data, filename)
         
         elif 'star story' in title_lower:
+            if not self.is_logged_in:
+                await self.login(page)
+            
             await page.goto(f"{self.base_url}/generator")
             await page.wait_for_load_state('networkidle')
+            await page.wait_for_timeout(2000)
             try:
-                await page.select_option('select[name="mode"]', 'star-story', timeout=2000)
-                await page.wait_for_timeout(500)
+                mode_select = page.locator('select[name="mode"]').first
+                if await mode_select.count() > 0:
+                    await mode_select.select_option('star-story')
+                    await page.wait_for_timeout(1500)
             except:
                 pass
             filename = f"slide_{slide_data['section_number']:02d}_star_story.png"
             return await self.take_screenshot(page, slide_data, filename)
         
         elif 'help' in title_lower or 'faq' in title_lower:
+            if not self.is_logged_in:
+                await self.login(page)
+            
             await page.goto(f"{self.base_url}/dashboard")
             await page.wait_for_load_state('networkidle')
+            await page.wait_for_timeout(2000)
             # Try to open help sidebar
             try:
-                await page.click('text=Help', timeout=2000)
-                await page.wait_for_timeout(1000)
+                help_button = page.locator('text=Help, button:has-text("Help"), .app-shell__help-button, [class*="help"]').first
+                if await help_button.count() > 0:
+                    await help_button.click()
+                    await page.wait_for_timeout(2000)  # Wait for sidebar to open
             except:
                 pass
             filename = f"slide_{slide_data['section_number']:02d}_help.png"
             return await self.take_screenshot(page, slide_data, filename)
         
         else:
-            # Default: stay on current page or go to dashboard
-            if '/dashboard' not in page.url:
-                await page.goto(f"{self.base_url}/dashboard")
-                await page.wait_for_load_state('networkidle')
-            await page.wait_for_timeout(1000)
-            filename = f"slide_{slide_data['section_number']:02d}_default.png"
+            # Default: dashboard overview (closing)
+            if not self.is_logged_in:
+                await self.login(page)
+            
+            await page.goto(f"{self.base_url}/dashboard")
+            await page.wait_for_load_state('networkidle')
+            await page.wait_for_timeout(3000)
+            filename = f"slide_{slide_data['section_number']:02d}_dashboard.png"
             return await self.take_screenshot(page, slide_data, filename)
     
     async def capture_all_screenshots(self):
         """Navigate app and capture all screenshots"""
         slides = self.parse_script()
-        print(f"📝 Found {len(slides)} slides to create")
+        print(f"📝 Found {len(slides)} slides to create (signup skipped)")
         
         async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=False)  # Set to True for headless
+            browser = await p.chromium.launch(headless=False)
             context = await browser.new_context(
                 viewport={'width': 1920, 'height': 1080}
             )
@@ -197,14 +314,19 @@ class NarakeetPresentationCreator:
             
             try:
                 print(f"🌐 Starting screenshot capture...")
-                print(f"🌐 Make sure your app is running at {self.base_url}\n")
+                print(f"🌐 Connecting to {self.base_url}\n")
                 
+                # Login first (but don't screenshot it)
+                await self.login(page)
+                await page.wait_for_timeout(3000)
+                
+                # Execute each slide
                 for i, slide_data in enumerate(slides, 1):
                     print(f"\n[{i}/{len(slides)}] {slide_data['title']}")
                     screenshot_path = await self.navigate_and_screenshot(page, slide_data)
                     slide_data['screenshot_path'] = screenshot_path
                     self.slides_data.append(slide_data)
-                    await page.wait_for_timeout(1000)  # Pause between screenshots
+                    await page.wait_for_timeout(2000)  # Pause between screenshots
                 
                 print(f"\n✅ All screenshots captured!")
                 
@@ -233,7 +355,7 @@ class NarakeetPresentationCreator:
                 title_frame = title_box.text_frame
                 title_frame.text = slide_data['title']
                 title_para = title_frame.paragraphs[0]
-                title_para.font.size = Pt(32)
+                title_para.font.size = Pt(28)
                 title_para.font.bold = True
                 title_para.alignment = PP_ALIGN.LEFT
             
@@ -251,7 +373,7 @@ class NarakeetPresentationCreator:
                 except Exception as e:
                     print(f"⚠️  Could not add image {screenshot_path}: {e}")
             
-            # Add speaker notes (narration)
+            # Add speaker notes (narration) - aligned with screenshot
             if slide_data.get('narration'):
                 notes_slide = slide.notes_slide
                 notes_text_frame = notes_slide.notes_text_frame
@@ -280,6 +402,7 @@ class NarakeetPresentationCreator:
                     f.write(f"Notes: {slide_data['narration']}\n")
                 if slide_data.get('visual'):
                     f.write(f"Visual: {slide_data['visual']}\n")
+                f.write(f"Screenshot: {slide_data.get('screenshot_path', 'N/A')}\n")
                 f.write("\n")
         
         print(f"✅ Notes file saved: {notes_path}")
@@ -295,13 +418,12 @@ def main():
     print("🎬 Narakeet Presentation Creator")
     print("=" * 60)
     print("\nThis script will:")
-    print("1. Read DEMO_VIDEO_SCRIPT.md")
-    print("2. Navigate your app and take screenshots")
-    print("3. Create PowerPoint with screenshots and speaker notes")
-    print("4. Ready to upload to Narakeet Slides to Video\n")
-    print("⚠️  Make sure your app is running at http://localhost:3000")
-    print("⚠️  Install dependencies: pip install playwright python-pptx")
-    print("⚠️  Then: playwright install\n")
+    print("1. Log in to careerpilotconsulting.com")
+    print("2. Mask user information in screenshots")
+    print("3. Take screenshots at key points")
+    print("4. Create PowerPoint with screenshots and speaker notes")
+    print("5. Ready to upload to Narakeet Slides to Video\n")
+    print("⚠️  Note: Sign up screenshot will be skipped\n")
     
     response = input("Ready to start? (y/n): ")
     if response.lower() != 'y':
@@ -341,4 +463,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
