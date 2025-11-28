@@ -362,11 +362,14 @@ async def parse_job_url(
     request: ParseJobUrlRequest,
     user: User = Depends(get_current_user_from_header)
 ):
-    """Parse job posting URL and extract company name, role title, and job description."""
+    """Parse job posting URL and extract company name, role title, and job description using LLM."""
     try:
         import requests
         from bs4 import BeautifulSoup
         import re
+        import json
+        import os
+        from openai import OpenAI
         
         # Validate URL
         if not request.url.startswith(('http://', 'https://')):
@@ -389,272 +392,117 @@ async def parse_job_url(
         # Parse HTML
         soup = BeautifulSoup(response.content, 'html.parser')
         
-        # Initialize result
-        company_name = None
-        role_title = None
-        job_description = None
+        # Remove scripts, styles, and other non-content elements
+        for script in soup(["script", "style", "nav", "header", "footer", "aside", "noscript"]):
+            script.decompose()
         
-        # Detect platform and parse accordingly
-        url_lower = request.url.lower()
+        # Get the main content - try to find the most relevant content area
+        main_content = None
         
-        if 'linkedin.com/jobs' in url_lower:
-            # LinkedIn job posting
-            # Try JSON-LD structured data first (most reliable)
-            json_ld_scripts = soup.find_all('script', type='application/ld+json')
-            for script in json_ld_scripts:
-                try:
-                    import json
-                    data = json.loads(script.string)
-                    if isinstance(data, dict):
-                        if 'title' in data and not role_title:
-                            role_title = data['title']
-                        if 'hiringOrganization' in data:
-                            org = data['hiringOrganization']
-                            if isinstance(org, dict) and 'name' in org and not company_name:
-                                company_name = org['name']
-                            elif isinstance(org, str) and not company_name:
-                                company_name = org
-                except:
-                    pass
-            
-            # Try to find job title
-            title_selectors = [
-                'h1.top-card-layout__title',
-                'h1.job-details-jobs-unified-top-card__job-title',
-                'h1[data-test-id="job-title"]',
-                '.job-details-jobs-unified-top-card__job-title',
-                'h1.jobs-details-top-card__job-title',
-                'h1.job-details-jobs-unified-top-card__job-title-link',
-                'h1'
-            ]
-            for selector in title_selectors:
-                title_elem = soup.select_one(selector)
-                if title_elem:
-                    text = title_elem.get_text(strip=True)
-                    if text and len(text) < 200:  # Reasonable title length
-                        role_title = text
-                        break
-            
-            # Try to find company name
-            company_selectors = [
-                'a.topcard__org-name-link',
-                'a.job-details-jobs-unified-top-card__company-name',
-                '[data-test-id="job-poster"]',
-                '.job-details-jobs-unified-top-card__company-name',
-                'a[data-tracking-control-name="public_jobs_topcard-org-name"]',
-                '.jobs-details-top-card__company-name',
-                'a.jobs-details-top-card__company-name',
-                'span.jobs-details-top-card__company-name'
-            ]
-            for selector in company_selectors:
-                company_elem = soup.select_one(selector)
-                if company_elem:
-                    text = company_elem.get_text(strip=True)
-                    if text and len(text) < 100:  # Reasonable company name length
-                        company_name = text
-                        break
-            
-            # Try extracting from page title if still not found
-            if not role_title or not company_name:
-                page_title = soup.find('title')
-                if page_title:
-                    title_text = page_title.get_text(strip=True)
-                    # LinkedIn titles often format as "Job Title | Company | LinkedIn"
-                    if '|' in title_text:
-                        parts = [p.strip() for p in title_text.split('|')]
-                        if len(parts) >= 2:
-                            if not role_title and parts[0] and 'linkedin' not in parts[0].lower():
-                                role_title = parts[0]
-                            if not company_name and len(parts) >= 2 and 'linkedin' not in parts[1].lower():
-                                company_name = parts[1]
-                    elif ' at ' in title_text.lower():
-                        # "Job Title at Company"
-                        parts = re.split(r'\s+at\s+', title_text, 1, flags=re.IGNORECASE)
-                        if len(parts) == 2:
-                            if not role_title:
-                                role_title = parts[0].strip()
-                            if not company_name:
-                                company_name = parts[1].strip()
-            
-            # Try to find job description
-            desc_selectors = [
-                'div.show-more-less-html__markup',
-                'div.description__text',
-                'div[data-test-id="job-description"]',
-                '.jobs-description__text',
-                'div.description'
-            ]
-            for selector in desc_selectors:
-                desc_elem = soup.select_one(selector)
-                if desc_elem:
-                    # Remove script and style elements
-                    for script in desc_elem(["script", "style"]):
-                        script.decompose()
-                    job_description = desc_elem.get_text(separator='\n', strip=True)
-                    # Clean up excessive whitespace
-                    job_description = re.sub(r'\n{3,}', '\n\n', job_description)
-                    break
+        # Try to find main content areas
+        content_selectors = [
+            'main',
+            'article',
+            '[role="main"]',
+            '.job-description',
+            '.description',
+            '#job-description',
+            '.jobs-description',
+            '.jobsearch-jobDescriptionText',
+            'div.show-more-less-html__markup'
+        ]
         
-        elif 'indeed.com' in url_lower or 'indeed.ca' in url_lower:
-            # Indeed job posting
-            # Try JSON-LD structured data first
-            json_ld_scripts = soup.find_all('script', type='application/ld+json')
-            for script in json_ld_scripts:
-                try:
-                    import json
-                    data = json.loads(script.string)
-                    if isinstance(data, dict):
-                        if 'title' in data and not role_title:
-                            role_title = data['title']
-                        if 'hiringOrganization' in data:
-                            org = data['hiringOrganization']
-                            if isinstance(org, dict) and 'name' in org and not company_name:
-                                company_name = org['name']
-                            elif isinstance(org, str) and not company_name:
-                                company_name = org
-                except:
-                    pass
-            
-            # Try to find job title
-            title_selectors = [
-                'h1.jobsearch-JobInfoHeader-title',
-                'h1[data-testid="job-title"]',
-                'h1.jobsearch-JobInfoHeader-title--wrap',
-                'h1'
-            ]
-            for selector in title_selectors:
-                title_elem = soup.select_one(selector)
-                if title_elem:
-                    text = title_elem.get_text(strip=True)
-                    if text and len(text) < 200:
-                        role_title = text
-                        break
-            
-            # Try to find company name
-            company_selectors = [
-                'a[data-testid="inlineHeader-companyName"]',
-                '.jobsearch-InlineCompanyRating',
-                'a[data-testid="job-poster"]',
-                'span[data-testid="job-poster"]',
-                'div[data-testid="job-poster"]',
-                'a.jobsearch-CompanyReview--primary'
-            ]
-            for selector in company_selectors:
-                company_elem = soup.select_one(selector)
-                if company_elem:
-                    text = company_elem.get_text(strip=True)
-                    if text and len(text) < 100:
-                        company_name = text
-                        break
-            
-            # Try extracting from page title if still not found
-            if not role_title or not company_name:
-                page_title = soup.find('title')
-                if page_title:
-                    title_text = page_title.get_text(strip=True)
-                    # Indeed titles often format as "Job Title - Company | Indeed"
-                    if ' - ' in title_text:
-                        parts = [p.strip() for p in title_text.split(' - ', 1)]
-                        if len(parts) >= 2:
-                            if not role_title and parts[0]:
-                                role_title = parts[0]
-                            # Remove "| Indeed" from company name
-                            company_part = parts[1].split('|')[0].strip()
-                            if not company_name and company_part:
-                                company_name = company_part
-            
-            desc_elem = soup.select_one('#jobDescriptionText, .jobsearch-jobDescriptionText')
-            if desc_elem:
-                for script in desc_elem(["script", "style"]):
-                    script.decompose()
-                job_description = desc_elem.get_text(separator='\n', strip=True)
-                job_description = re.sub(r'\n{3,}', '\n\n', job_description)
+        for selector in content_selectors:
+            elem = soup.select_one(selector)
+            if elem:
+                main_content = elem
+                break
         
-        else:
-            # Generic parsing - try common patterns
-            # Look for common job title patterns
-            title_patterns = [
-                soup.select_one('h1'),
-                soup.select_one('title'),
-            ]
-            for elem in title_patterns:
-                if elem:
-                    text = elem.get_text(strip=True)
-                    # Common patterns: "Job Title at Company" or "Job Title - Company"
-                    if ' at ' in text or ' - ' in text:
-                        parts = re.split(r'\s+at\s+|\s+-\s+', text, 1)
-                        if len(parts) == 2:
-                            role_title = parts[0].strip()
-                            company_name = parts[1].strip()
-                        break
-                    elif len(text) < 100:  # Likely a title if short
-                        role_title = text
-                        break
+        # If no main content found, use body
+        if not main_content:
+            main_content = soup.find('body') or soup
+        
+        # Extract text content (limit to avoid token limits)
+        page_text = main_content.get_text(separator='\n', strip=True)
+        # Clean up excessive whitespace
+        page_text = re.sub(r'\n{3,}', '\n\n', page_text)
+        # Limit to first 8000 characters to stay within token limits
+        page_text = page_text[:8000]
+        
+        # Also get page title for context
+        page_title = soup.find('title')
+        title_text = page_title.get_text(strip=True) if page_title else ""
+        
+        # Use OpenAI to intelligently extract information
+        openai_api_key = os.getenv("OPENAI_API_KEY")
+        if not openai_api_key:
+            return ParseJobUrlResponse(
+                success=False,
+                error="OpenAI API key not configured. Cannot parse job posting."
+            )
+        
+        client = OpenAI(api_key=openai_api_key)
+        
+        # Create a prompt for the LLM
+        prompt = f"""You are analyzing a job posting webpage. Extract the following information from the content below:
+
+Page Title: {title_text}
+
+Page Content:
+{page_text}
+
+Please extract and return ONLY a JSON object with these exact keys:
+- "company_name": The name of the hiring company (string, or null if not found)
+- "role_title": The job title/position name (string, or null if not found)  
+- "job_description": A clean, well-formatted job description including key responsibilities and requirements (string, or null if not found)
+
+Rules:
+1. Extract the actual company name, not the job board name (e.g., "Google" not "LinkedIn" or "Indeed")
+2. Extract the full job title as it appears
+3. For job_description, include the main responsibilities, requirements, and key details. Format it nicely with line breaks.
+4. If any field cannot be determined, use null
+5. Return ONLY valid JSON, no markdown, no explanations
+
+JSON:"""
+        
+        try:
+            # Call OpenAI API
+            completion = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are a helpful assistant that extracts structured information from job postings. Always return valid JSON only."
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
+                temperature=0.1,  # Low temperature for accurate extraction
+                response_format={"type": "json_object"}  # Force JSON response
+            )
             
-            # Look for description in common containers
-            desc_containers = soup.select('main, article, .content, .description, #description')
-            for container in desc_containers:
-                text = container.get_text(separator='\n', strip=True)
-                if len(text) > 200:  # Likely a description if long
-                    job_description = re.sub(r'\n{3,}', '\n\n', text)
-                    break
-        
-        # If we didn't find anything, try meta tags
-        if not role_title:
-            meta_title = soup.find('meta', property='og:title')
-            if meta_title:
-                title_content = meta_title.get('content', '').strip()
-                if title_content:
-                    # Parse "Job Title | Company" or "Job Title - Company" from og:title
-                    if '|' in title_content:
-                        role_title = title_content.split('|')[0].strip()
-                    elif ' - ' in title_content:
-                        role_title = title_content.split(' - ')[0].strip()
-                    else:
-                        role_title = title_content
-        
-        if not company_name:
-            # Try og:site_name
-            meta_company = soup.find('meta', property='og:site_name')
-            if meta_company:
-                company_name = meta_company.get('content', '').strip()
+            # Parse the JSON response
+            response_text = completion.choices[0].message.content
+            extracted_data = json.loads(response_text)
             
-            # Try to extract from og:title if it has company info
-            if not company_name:
-                meta_title = soup.find('meta', property='og:title')
-                if meta_title:
-                    title_content = meta_title.get('content', '').strip()
-                    if '|' in title_content:
-                        parts = title_content.split('|')
-                        if len(parts) >= 2:
-                            company_name = parts[1].strip()
-                    elif ' - ' in title_content:
-                        parts = title_content.split(' - ', 1)
-                        if len(parts) == 2:
-                            company_name = parts[1].split('|')[0].strip()  # Remove "| Indeed" etc.
-        
-        # Final fallback: try to extract from page title
-        if (not role_title or not company_name) and soup.find('title'):
-            page_title = soup.find('title').get_text(strip=True)
-            # Common patterns: "Job Title | Company | Site" or "Job Title - Company | Site"
-            if '|' in page_title:
-                parts = [p.strip() for p in page_title.split('|')]
-                if len(parts) >= 2:
-                    if not role_title and parts[0]:
-                        role_title = parts[0]
-                    if not company_name and len(parts) >= 2:
-                        # Skip if it's the site name (LinkedIn, Indeed, etc.)
-                        potential_company = parts[1]
-                        if potential_company.lower() not in ['linkedin', 'indeed', 'glassdoor']:
-                            company_name = potential_company
-            elif ' - ' in page_title:
-                parts = page_title.split(' - ', 1)
-                if len(parts) == 2:
-                    if not role_title:
-                        role_title = parts[0].strip()
-                    company_part = parts[1].split('|')[0].strip()
-                    if not company_name and company_part.lower() not in ['linkedin', 'indeed', 'glassdoor']:
-                        company_name = company_part
+            company_name = extracted_data.get("company_name")
+            role_title = extracted_data.get("role_title")
+            job_description = extracted_data.get("job_description")
+            
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse LLM JSON response: {e}")
+            return ParseJobUrlResponse(
+                success=False,
+                error="Failed to parse job posting. Please try again or enter details manually."
+            )
+        except Exception as e:
+            logger.error(f"OpenAI API error: {e}")
+            return ParseJobUrlResponse(
+                success=False,
+                error=f"Error analyzing job posting: {str(e)}"
+            )
         
         # Clean up results
         if role_title:
@@ -667,6 +515,7 @@ async def parse_job_url(
             if len(job_description) > 5000:
                 job_description = job_description[:5000] + "..."
         
+        # Check if we got at least some information
         if not role_title and not company_name and not job_description:
             return ParseJobUrlResponse(
                 success=False,
@@ -693,6 +542,97 @@ async def parse_job_url(
         )
 
 
+@app.post("/api/v1/upload-context", response_model=UploadContextResponse)
+async def upload_context(
+    file: Optional[UploadFile] = File(None),
+    context_text: Optional[str] = Form(None),
+    user: User = Depends(get_current_user_from_header),
+    db: Session = Depends(get_db)
+):
+    """Upload career context document (text, markdown, doc, or pdf file)."""
+    # Clear agent cache for this user
+    if user.id in agent_cache:
+        del agent_cache[user.id]
+    
+    # Get context text from file or form
+    if file:
+        file_name = file.filename
+        file_type = Path(file_name).suffix.lower() if file_name else None
+        content = await file.read()
+        
+        # Handle different file types
+        if file_type in ['.txt', '.md', '.markdown']:
+            # Text files
+            if file.content_type not in ["text/plain", "text/markdown", "text/x-markdown", None]:
+                raise HTTPException(status_code=400, detail="File must be text or markdown")
+            context_text = content.decode('utf-8')
+        elif file_type in ['.pdf']:
+            # PDF files
+            try:
+                import pypdf
+                from io import BytesIO
+                pdf_reader = pypdf.PdfReader(BytesIO(content))
+                text_parts = []
+                for page in pdf_reader.pages:
+                    text_parts.append(page.extract_text())
+                context_text = '\n\n'.join(text_parts)
+            except ImportError:
+                raise HTTPException(
+                    status_code=503,
+                    detail="PDF support not available. Please install pypdf: pip install pypdf"
+                )
+            except Exception as e:
+                raise HTTPException(status_code=400, detail=f"Error reading PDF: {str(e)}")
+        elif file_type in ['.doc', '.docx']:
+            # Word documents
+            try:
+                from docx import Document as DocxDocument
+                from io import BytesIO
+                doc = DocxDocument(BytesIO(content))
+                text_parts = []
+                for paragraph in doc.paragraphs:
+                    if paragraph.text.strip():
+                        text_parts.append(paragraph.text)
+                context_text = '\n\n'.join(text_parts)
+            except ImportError:
+                raise HTTPException(
+                    status_code=503,
+                    detail="Word document support not available. Please install python-docx: pip install python-docx"
+                )
+            except Exception as e:
+                raise HTTPException(status_code=400, detail=f"Error reading Word document: {str(e)}")
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unsupported file type: {file_type}. Supported types: .txt, .md, .pdf, .doc, .docx"
+            )
+    elif context_text:
+        file_name = None
+        file_type = None
+    else:
+        raise HTTPException(status_code=400, detail="Either file or context_text must be provided")
+    
+    if not context_text or len(context_text.strip()) < 50:
+        raise HTTPException(status_code=400, detail="Context text is too short (minimum 50 characters)")
+    
+    # Save context
+    context = save_user_context(
+        db,
+        user_id=user.id,
+        context_text=context_text,
+        file_name=file_name,
+        file_type=file_type
+    )
+    
+    return UploadContextResponse(
+        success=True,
+        message="Career context uploaded successfully",
+        context_id=context.id
+    )
+
+
+# API Information
+@app.get("/")
 @app.post("/api/v1/upload-context", response_model=UploadContextResponse)
 async def upload_context(
     file: Optional[UploadFile] = File(None),
