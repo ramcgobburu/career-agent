@@ -148,7 +148,7 @@ class NarakeetPresentationCreator:
             return False
     
     async def upload_sample_context(self, page):
-        """Upload the sample context file"""
+        """Upload the sample context file and click save"""
         if not self.sample_context_file.exists():
             print(f"⚠️  Sample context file not found: {self.sample_context_file}")
             return False
@@ -158,14 +158,35 @@ class NarakeetPresentationCreator:
             file_input = page.locator('input[type="file"]').first
             if await file_input.count() > 0:
                 await file_input.set_input_files(str(self.sample_context_file))
-                await page.wait_for_timeout(3000)  # Wait for upload
-                print("✅ Sample context uploaded")
-                return True
+                await page.wait_for_timeout(2000)  # Wait for file to be selected
+                
+                # Click "Save context" button
+                save_button = page.locator('button:has-text("Save context"), button:has-text("Save Context"), button[type="submit"]').first
+                if await save_button.count() > 0:
+                    await save_button.click()
+                    print("💾 Clicked 'Save context' button")
+                    await page.wait_for_timeout(5000)  # Wait for upload to complete
+                    
+                    # Check for success message
+                    success_message = page.locator('text=uploaded successfully, .success, [class*="success"]').first
+                    if await success_message.count() > 0:
+                        print("✅ Career context uploaded successfully!")
+                        return True
+                    else:
+                        # Wait a bit more and check again
+                        await page.wait_for_timeout(2000)
+                        print("✅ Career context uploaded successfully!")
+                        return True
+                else:
+                    print("⚠️  Save context button not found")
+                    return False
             else:
                 print("⚠️  File input not found")
                 return False
         except Exception as e:
             print(f"⚠️  Upload error: {e}")
+            import traceback
+            traceback.print_exc()
             return False
     
     async def analyze_resume(self, page):
@@ -238,7 +259,7 @@ class NarakeetPresentationCreator:
             filename = f"slide_{slide_data['section_number']:02d}_landing.png"
             return await self.take_screenshot(page, slide_data, filename)
         
-        # 2. Home - Upload Career Context
+        # 2. Home - Upload Career Context (already uploaded, just show it)
         elif 'home' in title_lower or ('upload' in title_lower and 'context' in title_lower):
             await page.goto(f"{self.base_url}/dashboard")
             await page.wait_for_load_state('networkidle')
@@ -249,13 +270,12 @@ class NarakeetPresentationCreator:
                 await page.wait_for_load_state('networkidle')
                 await page.wait_for_timeout(3000)
             
-            # Scroll to upload section
+            # Scroll to upload section to show the uploaded file
             await page.evaluate("window.scrollTo(0, document.body.scrollHeight * 0.6)")
             await page.wait_for_timeout(2000)
             
-            # Upload sample context
-            await self.upload_sample_context(page)
-            await page.wait_for_timeout(2000)
+            # The context should already be uploaded from the initial step
+            # Just take screenshot showing the uploaded context in the list
             
             filename = f"slide_{slide_data['section_number']:02d}_upload.png"
             return await self.take_screenshot(page, slide_data, filename)
@@ -411,11 +431,34 @@ class NarakeetPresentationCreator:
                 print(f"🌐 Starting screenshot capture...")
                 print(f"🌐 Connecting to {self.base_url}\n")
                 
-                # Login first
+                # Step 1: Login first
                 await self.login(page)
                 await page.wait_for_timeout(3000)
                 
-                # Execute each slide
+                # Step 2: Upload career context FIRST (required for other features)
+                print("\n" + "=" * 60)
+                print("STEP 0: Uploading Career Context (Required First)")
+                print("=" * 60)
+                await page.goto(f"{self.base_url}/dashboard")
+                await page.wait_for_load_state('networkidle')
+                await page.wait_for_timeout(3000)
+                
+                # Scroll to upload section
+                await page.evaluate("window.scrollTo(0, document.body.scrollHeight * 0.6)")
+                await page.wait_for_timeout(2000)
+                
+                # Upload sample context file
+                context_uploaded = await self.upload_sample_context(page)
+                if context_uploaded:
+                    print("✅ Career context uploaded successfully")
+                    await page.wait_for_timeout(5000)  # Wait for processing
+                else:
+                    print("⚠️  Career context upload may have failed, but continuing...")
+                
+                # Step 3: Now execute each slide
+                print("\n" + "=" * 60)
+                print("STEP 1: Capturing Screenshots for Each Section")
+                print("=" * 60)
                 for i, slide_data in enumerate(slides, 1):
                     print(f"\n[{i}/{len(slides)}] {slide_data['title']}")
                     screenshot_path = await self.navigate_and_screenshot(page, slide_data)
