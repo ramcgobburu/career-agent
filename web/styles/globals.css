@@ -1623,6 +1623,20 @@ input, textarea, select {
   color: #0f172a;
 }
 
+.generator__error-message {
+  color: #dc2626 !important;
+  background-color: #fef2f2 !important;
+  border: 2px solid #dc2626 !important;
+  padding: 1rem !important;
+  border-radius: 0.5rem !important;
+  margin-top: 1rem !important;
+  margin-bottom: 1rem !important;
+  font-size: 0.95rem !important;
+  line-height: 1.5 !important;
+  font-weight: 500 !important;
+  display: block !important;
+}
+
 .generator__tips ul {
   list-style: none;
   padding: 0;

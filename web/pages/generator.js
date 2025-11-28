@@ -473,7 +473,7 @@ export default function Generator({ user }) {
             {renderModeSpecificFields()}
 
             {errorMessage && (
-              <div className="generator__error" style={{ 
+              <div style={{ 
                 color: '#dc2626',
                 backgroundColor: '#fef2f2',
                 border: '2px solid #dc2626',
@@ -483,7 +483,8 @@ export default function Generator({ user }) {
                 marginBottom: '1rem',
                 fontSize: '0.95rem',
                 lineHeight: '1.5',
-                fontWeight: '500'
+                fontWeight: '500',
+                display: 'block'
               }}>
                 {errorMessage}
               </div>
