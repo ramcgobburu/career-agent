@@ -93,6 +93,7 @@ export default function Generator({ user }) {
     setSubmitting(true);
     setErrorMessage(null);
     setResult(null);
+    console.log('Starting submission, cleared error message');
 
     try {
       let endpoint = '';
@@ -176,7 +177,12 @@ export default function Generator({ user }) {
     } catch (error) {
       const message = error.message || 'Error generating content. Please try again.';
       console.error('Error in handleSubmit:', error);
+      console.log('Setting error message:', message);
       setErrorMessage(message);
+      // Force a re-render by logging the state
+      setTimeout(() => {
+        console.log('Error message state after set:', errorMessage);
+      }, 100);
     } finally {
       setSubmitting(false);
     }
@@ -473,8 +479,8 @@ export default function Generator({ user }) {
             {renderModeSpecificFields()}
 
             {errorMessage && (
-              <div className="error" role="alert">
-                {errorMessage}
+              <div className="error" role="alert" style={{ display: 'block', visibility: 'visible' }}>
+                <strong>Error:</strong> {errorMessage}
               </div>
             )}
 
