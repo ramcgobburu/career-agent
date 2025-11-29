@@ -46,7 +46,20 @@ export default function AppShell({ children }) {
               const isActive = item.href !== '#' && currentPath.startsWith(item.href);
               return (
                 <li key={item.label} className={isActive ? 'active' : ''}>
-                  <Link href={item.href} className="app-shell__nav-item" onClick={closeMobile}>
+                  <Link 
+                    href={item.href} 
+                    className="app-shell__nav-item" 
+                    onClick={() => {
+                      // Close mobile sidebar when link is clicked
+                      setMobileOpen(false);
+                    }}
+                    style={{ 
+                      display: 'block',
+                      width: '100%',
+                      textDecoration: 'none',
+                      WebkitTapHighlightColor: 'transparent'
+                    }}
+                  >
                     <span className="app-shell__nav-label">{item.label}</span>
                   </Link>
                 </li>
