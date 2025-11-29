@@ -1378,12 +1378,23 @@ input, textarea, select {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  width: 100%;
 }
 
 .input-group label {
   font-weight: 500;
   color: #1e293b;
   font-size: 0.875rem;
+}
+
+@media (max-width: 640px) {
+  .input-group {
+    gap: 0.5rem;
+  }
+  
+  .input-group label {
+    font-size: 0.8125rem;
+  }
 }
 
 .input-group input[type='file'] {
@@ -2669,6 +2680,25 @@ form .generator__error-message *,
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
 }
 
+.linkedin-optimizer__form input,
+.linkedin-optimizer__form textarea {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.linkedin-optimizer__role-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 768px) {
+  .linkedin-optimizer__role-fields {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+}
+
 .job-tracker__list {
   display: flex;
   flex-direction: column;
@@ -2857,6 +2887,21 @@ form .generator__error-message *,
   .job-tracker__form,
   .linkedin-optimizer__form {
     padding: 1.5rem;
+  }
+  
+  .linkedin-optimizer__role-fields {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .linkedin-optimizer__form .input-group {
+    margin-bottom: 0;
+  }
+  
+  .linkedin-optimizer__form input,
+  .linkedin-optimizer__form textarea {
+    width: 100%;
+    font-size: 16px; /* Prevents zoom on iOS */
   }
 }
 

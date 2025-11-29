@@ -133,7 +133,7 @@ export default function LinkedInOptimizer({ user }) {
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div className="linkedin-optimizer__role-fields">
                 <div className="input-group">
                   <label htmlFor="currentRole">Current Role</label>
                   <input
