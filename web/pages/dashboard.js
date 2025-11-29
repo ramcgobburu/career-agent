@@ -191,6 +191,45 @@ export default function Dashboard({ user }) {
           </div>
         </header>
 
+        <section className="dashboard__video-section">
+          <article className="panel-card panel-card--video-horizontal">
+            <div className="video-horizontal__content">
+              <div className="video-horizontal__text">
+                <h2>
+                  <span style={{ marginRight: '0.5rem', fontSize: '1.5rem' }}>🎥</span>
+                  How to make better use of this tool
+                </h2>
+                <p>Watch our demo video to learn best practices and unlock the full potential of CareerPilot.</p>
+              </div>
+              
+              <div className="video-thumbnail-container video-thumbnail-container--horizontal">
+                <a 
+                  href="https://www.youtube.com/watch?v=YQaJvmKAPao" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="video-thumbnail-link"
+                >
+                  <div className="video-thumbnail-wrapper">
+                    <img 
+                      src="https://img.youtube.com/vi/YQaJvmKAPao/maxresdefault.jpg" 
+                      alt="CareerPilot Demo Video"
+                      className="video-thumbnail"
+                      loading="lazy"
+                    />
+                    <div className="video-play-overlay">
+                      <div className="video-play-button">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M8 5v14l11-7z"/>
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                </a>
+              </div>
+            </div>
+          </article>
+        </section>
+
         <section className="dashboard__panels">
           <article className="panel-card panel-card--info">
             <div className="panel-card__header">
@@ -269,65 +308,6 @@ export default function Dashboard({ user }) {
                   </li>
                 ))}
               </ul>
-            </div>
-          </article>
-
-          <article className="panel-card panel-card--video">
-            <div className="panel-card__header">
-              <div>
-                <h2>
-                  <span style={{ marginRight: '0.5rem', fontSize: '1.5rem' }}>🎥</span>
-                  How to make better use of this tool
-                </h2>
-                <p>Watch our demo video to learn best practices and unlock the full potential of CareerPilot.</p>
-              </div>
-            </div>
-            
-            <div className="video-thumbnail-container">
-              <a 
-                href="https://www.youtube.com/watch?v=YQaJvmKAPao" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="video-thumbnail-link"
-              >
-                <div className="video-thumbnail-wrapper">
-                  <img 
-                    src="https://img.youtube.com/vi/YQaJvmKAPao/maxresdefault.jpg" 
-                    alt="CareerPilot Demo Video"
-                    className="video-thumbnail"
-                    loading="lazy"
-                  />
-                  <div className="video-play-overlay">
-                    <div className="video-play-button">
-                      <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M8 5v14l11-7z"/>
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-              </a>
-            </div>
-            
-            <div className="panel-card__actions">
-              <a 
-                href="https://www.youtube.com/watch?v=YQaJvmKAPao" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="cta"
-                style={{ 
-                  display: 'inline-flex', 
-                  alignItems: 'center', 
-                  gap: '0.5rem', 
-                  textDecoration: 'none',
-                  width: 'fit-content'
-                }}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0 }}>
-                  <path d="M8 5v14l11-7z"/>
-                </svg>
-                Watch Demo Video
-              </a>
-              <p className="muted">Learn how to upload context, generate materials, and optimize your LinkedIn profile.</p>
             </div>
           </article>
         </section>
