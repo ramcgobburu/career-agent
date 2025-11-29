@@ -218,21 +218,21 @@ export default function Home() {
       </header>
 
       {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
+      <section className="pt-24 sm:pt-32 pb-12 sm:pb-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+          <div className="grid lg:grid-cols-2 gap-8 sm:gap-12 items-center">
             <div>
               <div className="inline-flex items-center gap-2 bg-teal-50 text-teal-700 px-4 py-2 rounded-full mb-6">
                 <Sparkles className="w-4 h-4" />
                 <span>AI-Powered Career Assistant</span>
               </div>
-              <h1 className="text-5xl lg:text-6xl text-gray-900 mb-6 leading-tight">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl text-gray-900 mb-4 sm:mb-6 leading-tight">
                 Navigate Your Career with{' '}
                 <span className="bg-gradient-to-r from-teal-500 to-emerald-600 bg-clip-text text-transparent">
                   AI Intelligence
                 </span>
               </h1>
-              <p className="text-xl text-gray-600 mb-8 leading-relaxed">
+              <p className="text-base sm:text-lg lg:text-xl text-gray-600 mb-6 sm:mb-8 leading-relaxed">
                 From resume building to LinkedIn optimization, CareerPilot uses AI to help you create compelling career content and land your dream job.
               </p>
 
@@ -269,29 +269,29 @@ export default function Home() {
                 </a>
               </div>
 
-              <div className="grid grid-cols-3 gap-8 mt-12 pt-12 border-t border-gray-200">
+              <div className="grid grid-cols-3 gap-4 sm:gap-8 mt-8 sm:mt-12 pt-8 sm:pt-12 border-t border-gray-200">
                 <div>
-                  <div className="text-3xl text-gray-900 mb-1">50K+</div>
-                  <div className="text-sm text-gray-600">Users</div>
+                  <div className="text-2xl sm:text-3xl text-gray-900 mb-1">50K+</div>
+                  <div className="text-xs sm:text-sm text-gray-600">Users</div>
                 </div>
                 <div>
-                  <div className="text-3xl text-gray-900 mb-1">100K+</div>
-                  <div className="text-sm text-gray-600">Resumes Created</div>
+                  <div className="text-2xl sm:text-3xl text-gray-900 mb-1">100K+</div>
+                  <div className="text-xs sm:text-sm text-gray-600">Resumes Created</div>
                 </div>
                 <div>
-                  <div className="text-3xl text-gray-900 mb-1">4.9/5</div>
-                  <div className="text-sm text-gray-600">User Rating</div>
+                  <div className="text-2xl sm:text-3xl text-gray-900 mb-1">4.9/5</div>
+                  <div className="text-xs sm:text-sm text-gray-600">User Rating</div>
                 </div>
               </div>
             </div>
 
-            <div className="relative">
-              <div className="absolute -inset-4 bg-gradient-to-r from-teal-500 to-emerald-600 rounded-2xl opacity-10 blur-2xl"></div>
-              <div className="relative rounded-2xl overflow-hidden shadow-2xl">
+            <div className="relative mt-8 lg:mt-0">
+              <div className="absolute -inset-2 sm:-inset-4 bg-gradient-to-r from-teal-500 to-emerald-600 rounded-xl sm:rounded-2xl opacity-10 blur-xl sm:blur-2xl"></div>
+              <div className="relative rounded-xl sm:rounded-2xl overflow-hidden shadow-xl sm:shadow-2xl">
                 <img
                   src="https://images.unsplash.com/photo-1758520144417-e1c432042dec?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080"
                   alt="Resume building"
-                  className="w-full h-[600px] object-cover"
+                  className="w-full h-[300px] sm:h-[400px] md:h-[500px] lg:h-[600px] object-cover object-center"
                   loading="lazy"
                 />
               </div>
