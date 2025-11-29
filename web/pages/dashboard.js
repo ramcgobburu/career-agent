@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useSupabaseClient, useSession } from '@supabase/auth-helpers-react';
 import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs';
-import { ArrowRight, FileText, FolderOpen, Briefcase, Sparkles, TrendingUp, Clock, CheckCircle2, Linkedin } from 'lucide-react';
+import { ArrowRight, FileText, FolderOpen, Briefcase, Sparkles, TrendingUp, Clock, CheckCircle2, Linkedin, LogOut, User } from 'lucide-react';
 import AppShell from '../components/AppShell';
 
 export default function Dashboard({ user }) {
@@ -121,11 +121,29 @@ export default function Dashboard({ user }) {
       </Head>
       <div className="p-8 bg-gray-50 min-h-screen">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl text-gray-900 mb-2">
-            Welcome back, {profile?.name || user?.email?.split('@')[0] || 'User'}!
-          </h1>
-          <p className="text-gray-600">Here's what's happening with your career journey today.</p>
+        <div className="mb-8 flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl text-gray-900 mb-2">
+              Welcome back, {profile?.name || user?.email?.split('@')[0] || 'User'}!
+            </h1>
+            <p className="text-gray-600">Here's what's happening with your career journey today.</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/account"
+              className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-all"
+            >
+              <User className="w-4 h-4" />
+              <span className="text-sm">Account</span>
+            </Link>
+            <button
+              onClick={handleSignOut}
+              className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-all"
+            >
+              <LogOut className="w-4 h-4" />
+              <span className="text-sm">Sign out</span>
+            </button>
+          </div>
         </div>
 
         {/* Quick Stats */}

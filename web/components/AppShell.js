@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { Home, FileText, FolderOpen, Briefcase, Sparkles, Linkedin, User, CreditCard, Settings as SettingsIcon, HelpCircle, Compass } from 'lucide-react';
+import { useSupabaseClient } from '@supabase/auth-helpers-react';
+import { Home, FileText, FolderOpen, Briefcase, Sparkles, Linkedin, User, CreditCard, Settings as SettingsIcon, HelpCircle, Compass, LogOut } from 'lucide-react';
 import HelpSidebar from './HelpSidebar';
 
 const MENU_ITEMS = [
@@ -22,6 +23,7 @@ const BOTTOM_MENU_ITEMS = [
 
 export default function AppShell({ children }) {
   const router = useRouter();
+  const supabase = useSupabaseClient();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
@@ -37,6 +39,16 @@ export default function AppShell({ children }) {
   };
 
   const closeMobile = () => setMobileOpen(false);
+
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+      router.push('/');
+    } catch (err) {
+      console.error('Error during sign out:', err);
+      router.push('/');
+    }
+  };
 
   return (
     <div className={`app-shell ${collapsed ? 'app-shell--collapsed' : ''} ${mobileOpen ? 'app-shell--mobile-open' : ''}`}>
@@ -133,6 +145,19 @@ export default function AppShell({ children }) {
                 </li>
               );
             })}
+            <li>
+              <button
+                onClick={() => {
+                  handleSignOut();
+                  setMobileOpen(false);
+                }}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all text-left text-gray-700 hover:bg-red-50 hover:text-red-700"
+                style={{ WebkitTapHighlightColor: 'transparent' }}
+              >
+                <LogOut className="w-5 h-5 flex-shrink-0" />
+                <span className="text-sm">Sign out</span>
+              </button>
+            </li>
           </ul>
         </div>
       </aside>
@@ -143,6 +168,15 @@ export default function AppShell({ children }) {
             ☰
           </button>
           <span>CareerPilot</span>
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className="ml-auto flex items-center gap-2 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-all"
+            style={{ WebkitTapHighlightColor: 'transparent' }}
+          >
+            <LogOut className="w-4 h-4" />
+            <span className="hidden sm:inline">Sign out</span>
+          </button>
         </header>
         <div className="app-shell__content">{children}</div>
       </div>
