@@ -1,41 +1,86 @@
 import Head from 'next/head';
-import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useSupabaseClient, useSession } from '@supabase/auth-helpers-react';
 import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs';
+import { Sparkles, FileText, Mail, MessageSquare, Target, Copy, Download, RefreshCw } from 'lucide-react';
 import AppShell from '../components/AppShell';
 
-const toneOptions = [
-  { value: 'professional', label: 'Professional' },
-  { value: 'friendly', label: 'Friendly' },
-  { value: 'formal', label: 'Formal' },
-];
-
-const lengthOptions = [
-  { value: 'short', label: 'Short' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'long', label: 'Long' },
-];
-
-const generatorModes = [
-  { value: 'cover-letter', label: 'Cover letter' },
-  { value: 'job-application-answer', label: 'Application answer' },
-  { value: 'blurb', label: 'Networking blurb' },
+const templates = [
+  {
+    id: 'cover-letter',
+    name: 'Cover Letter',
+    description: 'Generate tailored cover letters for job applications',
+    icon: FileText,
+    color: 'bg-blue-600',
+    endpoint: '/api/v1/cover-letter',
+  },
+  {
+    id: 'job-application-answer',
+    name: 'Interview Answers',
+    description: 'Prepare compelling answers to common interview questions',
+    icon: MessageSquare,
+    color: 'bg-green-600',
+    endpoint: '/api/v1/job-application-answer',
+  },
+  {
+    id: 'blurb',
+    name: 'Networking Blurb',
+    description: 'Create professional networking messages and blurbs',
+    icon: Mail,
+    color: 'bg-purple-600',
+    endpoint: '/api/v1/blurb',
+  },
+  {
+    id: 'summary',
+    name: 'Professional Summary',
+    description: 'Write impactful professional summaries for resumes',
+    icon: Target,
+    color: 'bg-orange-600',
+    endpoint: '/api/v1/query',
+  }
 ];
 
 export default function Generator({ user }) {
   const supabase = useSupabaseClient();
   const session = useSession();
   const router = useRouter();
+  const accessToken = session?.access_token;
+
+  const [selectedTemplate, setSelectedTemplate] = useState('cover-letter');
+  const [generatedContent, setGeneratedContent] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(null);
+
+  // Cover letter fields
+  const [company, setCompany] = useState('');
+  const [role, setRole] = useState('');
+  const [jobDescription, setJobDescription] = useState('');
+  const [additional, setAdditional] = useState('');
+  const [tone, setTone] = useState('professional');
+  const [length, setLength] = useState('medium');
+
+  // Application answer fields
+  const [question, setQuestion] = useState('');
+
+  // Blurb fields
+  const [blurbPurpose, setBlurbPurpose] = useState('LinkedIn introduction');
+  const [blurbStyle, setBlurbStyle] = useState('linkedin');
+  const [maxWords, setMaxWords] = useState(200);
+
+  // Job URL parsing
+  const [jobUrl, setJobUrl] = useState('');
+  const [parsingUrl, setParsingUrl] = useState(false);
+  const [urlError, setUrlError] = useState(null);
+
+  // Profile for usage stats
+  const [profile, setProfile] = useState(null);
 
   useEffect(() => {
     if (!session) {
       router.replace('/');
     }
   }, [session, router]);
-
-  const accessToken = session?.access_token;
 
   const apiBaseUrl = useMemo(() => {
     if (process.env.NEXT_PUBLIC_API_BASE_URL) {
@@ -47,31 +92,11 @@ export default function Generator({ user }) {
     if (window.location.hostname === 'localhost') {
       return 'http://localhost:8000';
     }
-    // Use API subdomain for production
     if (window.location.hostname === 'careerpilotconsulting.com' || window.location.hostname === 'www.careerpilotconsulting.com') {
       return 'https://api.careerpilotconsulting.com';
     }
     return `${window.location.origin}`;
   }, []);
-
-  const [mode, setMode] = useState('cover-letter');
-  const [company, setCompany] = useState('');
-  const [role, setRole] = useState('');
-  const [jobDescription, setJobDescription] = useState('');
-  const [additional, setAdditional] = useState('');
-  const [tone, setTone] = useState('professional');
-  const [length, setLength] = useState('medium');
-  const [blurbPurpose, setBlurbPurpose] = useState('LinkedIn introduction');
-  const [blurbStyle, setBlurbStyle] = useState('linkedin');
-  const [maxWords, setMaxWords] = useState(200);
-  const [question, setQuestion] = useState('');
-  const [jobUrl, setJobUrl] = useState('');
-  const [parsingUrl, setParsingUrl] = useState(false);
-  const [urlError, setUrlError] = useState(null);
-
-  const [submitting, setSubmitting] = useState(false);
-  const [result, setResult] = useState(null);
-  const [errorMessage, setErrorMessage] = useState(null);
 
   const authHeaders = useMemo(() => {
     if (!accessToken) {
@@ -83,270 +108,29 @@ export default function Generator({ user }) {
     };
   }, [accessToken]);
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    if (!apiBaseUrl || !accessToken) {
-      setErrorMessage('You need to be signed in to generate.');
-      return;
-    }
-
-    setSubmitting(true);
-    setErrorMessage(null);
-    setResult(null);
-    console.log('Starting submission, cleared error message');
-
-    try {
-      let endpoint = '';
-      let payload = {};
-
-      if (mode === 'cover-letter') {
-        endpoint = '/api/v1/cover-letter';
-        // Validate required fields
-        if (!company || !company.trim()) {
-          setErrorMessage('Company name is required');
-          setSubmitting(false);
-          return;
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!apiBaseUrl || !accessToken) return;
+      try {
+        const response = await fetch(`${apiBaseUrl}/api/v1/me`, {
+          headers: authHeaders,
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setProfile(data);
         }
-        if (!role || !role.trim()) {
-          setErrorMessage('Role title is required');
-          setSubmitting(false);
-          return;
-        }
-        payload = {
-          company_name: company.trim(),
-          role_title: role.trim(),
-          job_description: jobDescription?.trim() || undefined,
-          additional_context: additional?.trim() || undefined,
-          tone,
-          length,
-          format: 'text',
-        };
-      } else if (mode === 'job-application-answer') {
-        endpoint = '/api/v1/job-application-answer';
-        payload = {
-          question,
-          company_name: company || undefined,
-          job_description: jobDescription || undefined,
-          role_title: role || undefined,
-          format: 'text',
-        };
-      } else if (mode === 'blurb') {
-        endpoint = '/api/v1/blurb';
-        payload = {
-          purpose: blurbPurpose,
-          target_role: role || undefined,
-          max_words: maxWords,
-          style: blurbStyle,
-          format: 'text',
-        };
+      } catch (err) {
+        console.error('Failed to fetch profile:', err);
       }
-
-      console.log('Sending request:', {
-        url: `${apiBaseUrl}${endpoint}`,
-        payload,
-        headers: { ...authHeaders, 'Content-Type': 'application/json' }
-      });
-
-      const response = await fetch(`${apiBaseUrl}${endpoint}`, {
-        method: 'POST',
-        headers: { ...authHeaders, 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const errorBody = await response.json().catch(() => ({}));
-        let errorDetail = errorBody.detail || errorBody.message || errorBody.error || `Server returned ${response.status}`;
-        
-        // Make error messages more user-friendly - check for any mention of career context or upload
-        const errorLower = errorDetail.toLowerCase();
-        if (errorLower.includes('career context') || 
-            errorLower.includes('upload') || 
-            errorLower.includes('upload-context') ||
-            errorLower.includes('/api/v1/upload')) {
-          errorDetail = 'Please upload your career context first. Go to the home page and upload your resume or career document.';
-        }
-        
-        // Set error message immediately and stop
-        setSubmitting(false);
-        setErrorMessage(errorDetail);
-        return;
-      }
-
-      const data = await response.json();
-      setResult(data);
-      setErrorMessage(null); // Clear any previous errors on success
-      setSubmitting(false); // Reset submitting state after successful generation
-    } catch (error) {
-      const message = error.message || 'Error generating content. Please try again.';
-      setSubmitting(false);
-      setErrorMessage(message);
-    }
-  };
-
-  const renderModeSpecificFields = () => {
-    switch (mode) {
-      case 'cover-letter':
-        return (
-          <>
-            <label htmlFor="company">Company name</label>
-            <input
-              id="company"
-              type="text"
-              value={company}
-              onChange={(e) => setCompany(e.target.value)}
-              placeholder="Acme Corp"
-              required
-            />
-
-            <label htmlFor="role">Role title</label>
-            <input
-              id="role"
-              type="text"
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              placeholder="Senior Product Manager"
-              required
-            />
-
-            <label htmlFor="jobDescription">Job description or key requirements</label>
-            <textarea
-              id="jobDescription"
-              rows={5}
-              value={jobDescription}
-              onChange={(e) => setJobDescription(e.target.value)}
-              placeholder="Paste the most important parts of the job description here..."
-            />
-
-            <label htmlFor="additional">Additional points to include</label>
-            <textarea
-              id="additional"
-              rows={4}
-              value={additional}
-              onChange={(e) => setAdditional(e.target.value)}
-              placeholder="Specific stories, metrics, or talking points you'd like to emphasize..."
-            />
-
-            <div className="generator__inline">
-              <div>
-                <label htmlFor="tone">Tone</label>
-                <select id="tone" value={tone} onChange={(e) => setTone(e.target.value)}>
-                  {toneOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label htmlFor="length">Length</label>
-                <select id="length" value={length} onChange={(e) => setLength(e.target.value)}>
-                  {lengthOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </>
-        );
-      case 'job-application-answer':
-        return (
-          <>
-            <label htmlFor="question">Application question</label>
-            <textarea
-              id="question"
-              rows={4}
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-              placeholder="Describe a time you led a team through ambiguity..."
-              required
-            />
-
-            <label htmlFor="companyOptional">Company (optional)</label>
-            <input
-              id="companyOptional"
-              type="text"
-              value={company}
-              onChange={(e) => setCompany(e.target.value)}
-              placeholder="Acme Corp"
-            />
-
-            <label htmlFor="roleOptional">Role (optional)</label>
-            <input
-              id="roleOptional"
-              type="text"
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              placeholder="Senior Product Manager"
-            />
-
-            <label htmlFor="jobDescriptionOptional">Job description (optional)</label>
-            <textarea
-              id="jobDescriptionOptional"
-              rows={4}
-              value={jobDescription}
-              onChange={(e) => setJobDescription(e.target.value)}
-              placeholder="Paste parts of the job description that matter for this question..."
-            />
-          </>
-        );
-      case 'blurb':
-        return (
-          <>
-            <label htmlFor="purpose">Blurb purpose</label>
-            <input
-              id="purpose"
-              type="text"
-              value={blurbPurpose}
-              onChange={(e) => setBlurbPurpose(e.target.value)}
-              placeholder="LinkedIn introduction, recruiter outreach..."
-              required
-            />
-
-            <label htmlFor="roleBlurb">Target role (optional)</label>
-            <input
-              id="roleBlurb"
-              type="text"
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              placeholder="Principal Product Manager"
-            />
-
-            <div className="generator__inline">
-              <div>
-                <label htmlFor="maxWords">Max words</label>
-                <input
-                  id="maxWords"
-                  type="number"
-                  min={50}
-                  max={1000}
-                  value={maxWords}
-                  onChange={(e) => setMaxWords(Number(e.target.value))}
-                />
-              </div>
-              <div>
-                <label htmlFor="style">Style</label>
-                <select id="style" value={blurbStyle} onChange={(e) => setBlurbStyle(e.target.value)}>
-                  <option value="linkedin">LinkedIn</option>
-                  <option value="email">Email</option>
-                  <option value="professional">Professional</option>
-                </select>
-              </div>
-            </div>
-          </>
-        );
-      default:
-        return null;
-    }
-  };
+    };
+    fetchProfile();
+  }, [apiBaseUrl, accessToken, authHeaders]);
 
   const handleParseJobUrl = async () => {
     if (!jobUrl.trim()) {
       setUrlError('Please enter a job posting URL');
       return;
     }
-
     if (!apiBaseUrl || !accessToken) {
       setUrlError('You need to be signed in to parse job URLs');
       return;
@@ -368,24 +152,16 @@ export default function Generator({ user }) {
       }
 
       const data = await response.json();
-
       if (!data.success) {
         throw new Error(data.error || 'Failed to parse job posting');
       }
 
-      // Auto-fill form fields
-      if (data.company_name) {
-        setCompany(data.company_name);
-      }
-      if (data.role_title) {
-        setRole(data.role_title);
-      }
-      if (data.job_description) {
-        setJobDescription(data.job_description);
-      }
+      if (data.company_name) setCompany(data.company_name);
+      if (data.role_title) setRole(data.role_title);
+      if (data.job_description) setJobDescription(data.job_description);
 
       setUrlError(null);
-      setJobUrl(''); // Clear URL after successful parse
+      setJobUrl('');
     } catch (error) {
       setUrlError(error.message || 'Error parsing job URL. Please try again or enter details manually.');
     } finally {
@@ -393,10 +169,115 @@ export default function Generator({ user }) {
     }
   };
 
-  const handleCopy = async () => {
-    if (!result?.content) return;
+  const handleGenerate = async () => {
+    if (!apiBaseUrl || !accessToken) {
+      setErrorMessage('You need to be signed in to generate.');
+      return;
+    }
+
+    setIsGenerating(true);
+    setErrorMessage(null);
+    setGeneratedContent('');
+
     try {
-      await navigator.clipboard.writeText(result.content);
+      let endpoint = '';
+      let payload = {};
+
+      if (selectedTemplate === 'cover-letter') {
+        if (!company || !company.trim()) {
+          setErrorMessage('Company name is required');
+          setIsGenerating(false);
+          return;
+        }
+        if (!role || !role.trim()) {
+          setErrorMessage('Role title is required');
+          setIsGenerating(false);
+          return;
+        }
+        endpoint = '/api/v1/cover-letter';
+        payload = {
+          company_name: company.trim(),
+          role_title: role.trim(),
+          job_description: jobDescription?.trim() || null,
+          additional_context: additional?.trim() || null,
+          tone,
+          length,
+          format: 'text',
+        };
+      } else if (selectedTemplate === 'job-application-answer') {
+        if (!question || !question.trim()) {
+          setErrorMessage('Application question is required');
+          setIsGenerating(false);
+          return;
+        }
+        endpoint = '/api/v1/job-application-answer';
+        payload = {
+          question: question.trim(),
+          company_name: company || null,
+          job_description: jobDescription || null,
+          role_title: role || null,
+          format: 'text',
+        };
+      } else if (selectedTemplate === 'blurb') {
+        endpoint = '/api/v1/blurb';
+        payload = {
+          purpose: blurbPurpose,
+          target_role: role || null,
+          max_words: maxWords,
+          style: blurbStyle,
+          format: 'text',
+        };
+      } else if (selectedTemplate === 'summary') {
+        endpoint = '/api/v1/query';
+        payload = {
+          question: 'Generate a professional summary for my resume based on my career context.',
+          format: 'text',
+        };
+      }
+
+      const response = await fetch(`${apiBaseUrl}${endpoint}`, {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorBody = await response.json().catch(() => ({}));
+        let errorDetail = errorBody.detail || errorBody.message || errorBody.error || `Server returned ${response.status}`;
+        
+        const errorLower = errorDetail.toLowerCase();
+        if (errorLower.includes('career context') || errorLower.includes('upload')) {
+          errorDetail = 'Please upload your career context first. Go to Content Manager and upload your resume or career document.';
+        }
+        
+        setIsGenerating(false);
+        setErrorMessage(errorDetail);
+        return;
+      }
+
+      const data = await response.json();
+      setGeneratedContent(data.content || '');
+      setErrorMessage(null);
+
+      // Update profile if usage info is provided
+      if (data.usage_info) {
+        setProfile(prev => ({
+          ...prev,
+          requests_used: data.usage_info.requests_used,
+          requests_limit: data.usage_info.requests_limit,
+        }));
+      }
+    } catch (error) {
+      setErrorMessage(error.message || 'Error generating content. Please try again.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleCopy = async () => {
+    if (!generatedContent) return;
+    try {
+      await navigator.clipboard.writeText(generatedContent);
       setErrorMessage('Copied to clipboard!');
       setTimeout(() => setErrorMessage(null), 2000);
     } catch (err) {
@@ -404,222 +285,371 @@ export default function Generator({ user }) {
     }
   };
 
-  const handleDownloadWord = () => {
-    if (!result?.content) return;
-
-    // Create a simple Word document using HTML format that Word can open
-    const htmlContent = `
-      <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-      <head>
-        <meta charset='utf-8'>
-        <title>Cover Letter</title>
-        <!--[if gte mso 9]>
-        <xml>
-          <w:WordDocument>
-            <w:View>Print</w:View>
-            <w:Zoom>90</w:Zoom>
-            <w:DoNotOptimizeForBrowser/>
-          </w:WordDocument>
-        </xml>
-        <![endif]-->
-        <style>
-          body {
-            font-family: 'Times New Roman', serif;
-            font-size: 12pt;
-            line-height: 1.6;
-            margin: 1in;
-            color: #000;
-          }
-          p {
-            margin: 0 0 12pt 0;
-          }
-        </style>
-      </head>
-      <body>
-        ${result.content.split('\n').map(line => `<p>${line || '&nbsp;'}</p>`).join('')}
-      </body>
-      </html>
-    `;
-
-    // Create blob and download
-    const blob = new Blob(['\ufeff', htmlContent], { type: 'application/msword' });
+  const handleDownload = () => {
+    if (!generatedContent) return;
+    const blob = new Blob([generatedContent], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    
-    // Generate filename based on mode and company/role
-    const filename = mode === 'cover-letter' && company && role
-      ? `Cover_Letter_${company.replace(/[^a-z0-9]/gi, '_')}_${role.replace(/[^a-z0-9]/gi, '_')}.doc`
-      : `CareerPilot_${mode}_${new Date().toISOString().split('T')[0]}.doc`;
-    
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `careerpilot_${selectedTemplate}_${new Date().toISOString().split('T')[0]}.txt`;
+    a.click();
     URL.revokeObjectURL(url);
   };
+
+  const currentTemplate = templates.find(t => t.id === selectedTemplate);
+  const usageProgress = profile ? Math.min(100, Math.round((profile.requests_used / profile.requests_limit) * 100)) : 0;
 
   return (
     <AppShell>
       <Head>
-        <title>Generator | CareerPilot</title>
+        <title>AI Content Generator | CareerPilot</title>
       </Head>
-      <main className="generator">
-        <div className="generator__header">
-          <div>
-            <span className="generator__pill">Career-Agent Workspace</span>
-            <h1>Generate on-brand materials instantly</h1>
-            <p>
-              Use your uploaded context to produce polished cover letters, tailored application answers, and punchy
-              blurbs.
-            </p>
-          </div>
-          <Link href="/dashboard" className="ghost ghost--muted">
-            ← Back to dashboard
-          </Link>
+      <div className="p-8 bg-gray-50 min-h-screen">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl text-gray-900 mb-2">AI Content Generator</h1>
+          <p className="text-gray-600">Create professional career content with AI in seconds.</p>
         </div>
 
-        <section className="generator__content">
-          <form className="generator__form" onSubmit={handleSubmit}>
-            <div className="generator__mode">
-              <label htmlFor="mode">Choose what to create</label>
-              <div id="mode" className="generator__mode-buttons">
-                {generatorModes.map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    className={mode === option.value ? 'active' : ''}
-                    onClick={() => setMode(option.value)}
-                  >
-                    {option.label}
-                  </button>
-                ))}
+        <div className="grid lg:grid-cols-3 gap-6">
+          {/* Template Selection */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6 shadow-sm">
+              <h2 className="text-lg text-gray-900 mb-4">Select Template</h2>
+              <div className="space-y-3">
+                {templates.map((template) => {
+                  const IconComponent = template.icon;
+                  return (
+                    <button
+                      key={template.id}
+                      onClick={() => setSelectedTemplate(template.id)}
+                      className={`w-full flex items-start gap-3 p-4 rounded-lg transition-all text-left ${
+                        selectedTemplate === template.id
+                          ? 'bg-teal-50 border-2 border-teal-600'
+                          : 'border-2 border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className={`${template.color} p-2 rounded-lg text-white`}>
+                        <IconComponent className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h3 className="text-gray-900 mb-1 font-medium">{template.name}</h3>
+                        <p className="text-xs text-gray-600">{template.description}</p>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
-            {/* Job URL Parser */}
-            {(mode === 'cover-letter' || mode === 'job-application-answer') && (
-              <div className="generator__url-parser">
-                <label htmlFor="jobUrl">Or paste job posting URL (LinkedIn, Indeed, etc.)</label>
-                <div className="generator__url-input-group">
-                  <input
-                    id="jobUrl"
-                    type="url"
-                    value={jobUrl}
-                    onChange={(e) => setJobUrl(e.target.value)}
-                    placeholder="https://www.linkedin.com/jobs/view/..."
-                    disabled={parsingUrl}
-                  />
-                  <button
-                    type="button"
-                    onClick={handleParseJobUrl}
-                    disabled={parsingUrl || !jobUrl.trim()}
-                    className="ghost ghost--bright"
-                  >
-                    {parsingUrl ? 'Parsing...' : 'Auto-fill'}
-                  </button>
+            {/* Usage Stats */}
+            {profile && (
+              <div className="bg-gradient-to-br from-teal-500 to-emerald-600 rounded-xl p-6 text-white shadow-lg">
+                <h3 className="text-lg mb-4">Generation Credits</h3>
+                <div className="text-3xl mb-2 font-semibold">
+                  {profile.requests_used} / {profile.requests_limit === 999999 ? '∞' : profile.requests_limit}
                 </div>
-                {urlError && <p className="error">{urlError}</p>}
-                <p className="muted" style={{ fontSize: '0.875rem', marginTop: '0.5rem' }}>
-                  Paste a job posting URL to automatically fill company name, role title, and job description
-                </p>
+                <div className="text-sm text-teal-100 mb-4">Credits used this cycle</div>
+                <div className="bg-white/20 rounded-full h-2">
+                  <div 
+                    className="bg-white rounded-full h-2 transition-all" 
+                    style={{ width: `${usageProgress}%` }}
+                  ></div>
+                </div>
               </div>
             )}
+          </div>
 
-            {renderModeSpecificFields()}
-
-            {errorMessage && (
-              <div 
-                id="generator-error-message"
-                className="generator__error-message"
-                style={{
-                  color: '#dc2626',
-                  backgroundColor: '#fef2f2',
-                  border: '2px solid #dc2626',
-                  padding: '1rem',
-                  borderRadius: '0.5rem',
-                  marginTop: '1rem',
-                  marginBottom: '1rem',
-                  fontSize: '0.95rem',
-                  lineHeight: '1.5',
-                  fontWeight: '500',
-                  display: 'block'
-                }}
-              >
-                <span style={{ color: '#dc2626', display: 'inline-block', width: '100%' }}>{errorMessage}</span>
-              </div>
-            )}
-
-            <button type="submit" className="cta generator__submit" disabled={submitting}>
-              {submitting ? 'Generating…' : 'Generate'}
-            </button>
-          </form>
-
-          <aside className="generator__aside">
-            <div className="generator__result-card">
-              <h2>Output</h2>
-              <p className="muted">The generated text will appear here. Copy or tweak before sending.</p>
-              {result ? (
-                <>
-                  <div className="generator__result-meta">
-                    <span className="badge badge--endpoint">{mode}</span>
-                    {result.metadata && (
-                      <span className="muted">
-                        {Object.entries(result.metadata)
-                          .filter(([, value]) => Boolean(value))
-                          .map(([key, value]) => `${key}: ${value}`)
-                          .join(' · ')}
-                      </span>
-                    )}
-                  </div>
-                  <pre className="generator__result">{result.content}</pre>
-                  <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem' }}>
-                    <button type="button" className="ghost ghost--bright" onClick={handleCopy}>
-                      Copy text
+          {/* Generator Form */}
+          <div className="lg:col-span-2 space-y-6">
+            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+              <h2 className="text-lg text-gray-900 mb-4">Input Information</h2>
+              
+              {/* Job URL Parser for cover letter and application answer */}
+              {(selectedTemplate === 'cover-letter' || selectedTemplate === 'job-application-answer') && (
+                <div className="mb-6 p-4 bg-gray-50 border border-teal-200 rounded-lg">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Or paste job posting URL (LinkedIn, Indeed, etc.)
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="url"
+                      value={jobUrl}
+                      onChange={(e) => setJobUrl(e.target.value)}
+                      placeholder="https://www.linkedin.com/jobs/view/..."
+                      disabled={parsingUrl}
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-transparent outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleParseJobUrl}
+                      disabled={parsingUrl || !jobUrl.trim()}
+                      className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-all disabled:opacity-50 font-medium"
+                    >
+                      {parsingUrl ? 'Parsing...' : 'Auto-fill'}
                     </button>
-                    {mode === 'cover-letter' && (
-                      <button type="button" className="ghost ghost--bright" onClick={handleDownloadWord}>
-                        Download as Word
-                      </button>
-                    )}
                   </div>
-                  {result.usage_info && (
-                    <p className="muted generator__usage-hint">
-                      {result.usage_info.requests_used} of {result.usage_info.requests_limit} requests used.
-                    </p>
-                  )}
-                </>
-              ) : (
-                <div className="generator__placeholder">
-                  <p>Generate a piece of content to see it here.</p>
-                  <p className="muted">
-                    We will automatically ground outputs in your currently active context. For best results, make sure
-                    your context is up to date.
+                  {urlError && <p className="text-sm text-red-600 mt-2">{urlError}</p>}
+                  <p className="text-xs text-gray-500 mt-2">
+                    Paste a job posting URL to automatically fill company name, role title, and job description
                   </p>
                 </div>
               )}
+              
+              <div className="space-y-4">
+                {selectedTemplate === 'cover-letter' && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Job Title *</label>
+                      <input
+                        type="text"
+                        value={role}
+                        onChange={(e) => setRole(e.target.value)}
+                        placeholder="e.g., Senior Product Manager"
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-transparent outline-none"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Company Name *</label>
+                      <input
+                        type="text"
+                        value={company}
+                        onChange={(e) => setCompany(e.target.value)}
+                        placeholder="e.g., TechCorp Inc."
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-transparent outline-none"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Job Description</label>
+                      <textarea
+                        rows={4}
+                        value={jobDescription}
+                        onChange={(e) => setJobDescription(e.target.value)}
+                        placeholder="Paste the job description here for better results..."
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-transparent outline-none resize-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Your Key Skills & Experience</label>
+                      <textarea
+                        rows={3}
+                        value={additional}
+                        onChange={(e) => setAdditional(e.target.value)}
+                        placeholder="Highlight your relevant skills and experience..."
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-transparent outline-none resize-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Tone</label>
+                      <select 
+                        value={tone} 
+                        onChange={(e) => setTone(e.target.value)}
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-transparent outline-none"
+                      >
+                        <option value="professional">Professional</option>
+                        <option value="friendly">Friendly</option>
+                        <option value="formal">Formal</option>
+                        <option value="enthusiastic">Enthusiastic</option>
+                        <option value="confident">Confident</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Length</label>
+                      <select 
+                        value={length} 
+                        onChange={(e) => setLength(e.target.value)}
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-transparent outline-none"
+                      >
+                        <option value="short">Short</option>
+                        <option value="medium">Medium</option>
+                        <option value="long">Long</option>
+                      </select>
+                    </div>
+                  </>
+                )}
+
+                {selectedTemplate === 'job-application-answer' && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Application Question *</label>
+                      <textarea
+                        rows={4}
+                        value={question}
+                        onChange={(e) => setQuestion(e.target.value)}
+                        placeholder="e.g., Describe a time you led a team through ambiguity..."
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-transparent outline-none resize-none"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Company (Optional)</label>
+                      <input
+                        type="text"
+                        value={company}
+                        onChange={(e) => setCompany(e.target.value)}
+                        placeholder="e.g., TechCorp Inc."
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-transparent outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Role (Optional)</label>
+                      <input
+                        type="text"
+                        value={role}
+                        onChange={(e) => setRole(e.target.value)}
+                        placeholder="e.g., Senior Product Manager"
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-transparent outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Job Description (Optional)</label>
+                      <textarea
+                        rows={4}
+                        value={jobDescription}
+                        onChange={(e) => setJobDescription(e.target.value)}
+                        placeholder="Paste parts of the job description that matter for this question..."
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-transparent outline-none resize-none"
+                      />
+                    </div>
+                  </>
+                )}
+
+                {selectedTemplate === 'blurb' && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Blurb Purpose *</label>
+                      <input
+                        type="text"
+                        value={blurbPurpose}
+                        onChange={(e) => setBlurbPurpose(e.target.value)}
+                        placeholder="LinkedIn introduction, recruiter outreach..."
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-transparent outline-none"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Target Role (Optional)</label>
+                      <input
+                        type="text"
+                        value={role}
+                        onChange={(e) => setRole(e.target.value)}
+                        placeholder="e.g., Principal Product Manager"
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-transparent outline-none"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Max Words</label>
+                        <input
+                          type="number"
+                          min={50}
+                          max={1000}
+                          value={maxWords}
+                          onChange={(e) => setMaxWords(Number(e.target.value))}
+                          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-transparent outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Style</label>
+                        <select 
+                          value={blurbStyle} 
+                          onChange={(e) => setBlurbStyle(e.target.value)}
+                          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-transparent outline-none"
+                        >
+                          <option value="linkedin">LinkedIn</option>
+                          <option value="email">Email</option>
+                          <option value="professional">Professional</option>
+                        </select>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {selectedTemplate === 'summary' && (
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-sm text-blue-900">
+                      <strong>Note:</strong> This will generate a professional summary based on your uploaded career context.
+                    </p>
+                  </div>
+                )}
+
+                {errorMessage && (
+                  <div className="p-4 bg-red-50 border-2 border-red-200 rounded-lg">
+                    <p className="text-sm text-red-600">{errorMessage}</p>
+                  </div>
+                )}
+
+                <button
+                  onClick={handleGenerate}
+                  disabled={isGenerating}
+                  className="w-full bg-gradient-to-r from-teal-500 to-emerald-600 text-white py-3 rounded-lg hover:shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                >
+                  {isGenerating ? (
+                    <>
+                      <RefreshCw className="w-5 h-5 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-5 h-5" />
+                      Generate Content
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
 
-            <div className="generator__tips">
-              <h3>Pro tips</h3>
-              <ul>
-                <li>
-                  <strong>Tweak the tone</strong>
-                  <span>Experiment with the tone and length controls to match the audience you’re writing for.</span>
-                </li>
-                <li>
-                  <strong>Refresh your context</strong>
-                  <span>Upload or append new wins before generating to keep outputs accurate.</span>
-                </li>
-                <li>
-                  <strong>Iterate quickly</strong>
-                  <span>Generate, tweak the prompt, and regenerate. You can append new context mid-session.</span>
-                </li>
-              </ul>
-            </div>
-          </aside>
-        </section>
-      </main>
+            {/* Generated Content */}
+            {generatedContent && (
+              <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg text-gray-900">Generated Content</h2>
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={handleCopy}
+                      className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all flex items-center gap-2 text-sm"
+                    >
+                      <Copy className="w-4 h-4" />
+                      Copy
+                    </button>
+                    <button 
+                      onClick={handleDownload}
+                      className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all flex items-center gap-2 text-sm"
+                    >
+                      <Download className="w-4 h-4" />
+                      Download
+                    </button>
+                    <button 
+                      onClick={handleGenerate}
+                      className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-all flex items-center gap-2 text-sm font-medium"
+                    >
+                      <RefreshCw className="w-4 h-4" />
+                      Regenerate
+                    </button>
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 rounded-lg p-6">
+                  <pre className="whitespace-pre-wrap text-sm text-gray-700 leading-relaxed font-sans">
+                    {generatedContent}
+                  </pre>
+                </div>
+
+                <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <div className="flex gap-2">
+                    <Sparkles className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                    <div className="text-sm text-blue-900">
+                      <strong>AI Tip:</strong> Review and personalize this content to make it uniquely yours. Add specific examples and achievements to stand out.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </AppShell>
   );
 }
@@ -646,4 +676,3 @@ export const getServerSideProps = async (ctx) => {
     },
   };
 };
-

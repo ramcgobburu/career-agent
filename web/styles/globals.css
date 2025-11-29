@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 .app-shell {
   display: flex;
   min-height: 100vh;
@@ -310,7 +314,7 @@
 }
 
 @media (max-width: 960px) {
-  .app-shell__sidebar {
+  .app-shell > aside {
     position: fixed;
     inset: 0 auto 0 0;
     height: 100vh;
@@ -322,16 +326,16 @@
     -webkit-overflow-scrolling: touch;
   }
 
-  .app-shell--mobile-open .app-shell__sidebar {
+  .app-shell--mobile-open > aside {
     transform: translateX(0);
+  }
+
+  .app-shell > div.flex-1 {
+    margin-left: 0;
   }
 
   .app-shell__collapse {
     display: none;
-  }
-
-  .app-shell__main {
-    padding-top: 0;
   }
 
   .app-shell__mobile-header {
@@ -341,15 +345,6 @@
   .install-prompt {
     left: 0.5rem;
     right: 0.5rem;
-  }
-  
-  .app-shell__nav-item {
-    min-height: 44px;
-    display: flex;
-    align-items: center;
-    padding: 0.75rem 0.875rem;
-    -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
   }
   
   .app-shell__backdrop {
@@ -3237,6 +3232,68 @@ form .generator__error-message *,
 @media (max-width: 768px) {
   .help-sidebar {
     width: 100vw;
+  }
+
+  /* Mobile styles for new Tailwind-based components */
+  .p-8 {
+    padding: 1.5rem;
+  }
+
+  .grid.lg\\:grid-cols-3 {
+    grid-template-columns: 1fr;
+  }
+
+  .grid.md\\:grid-cols-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .grid.md\\:grid-cols-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .text-5xl,
+  .lg\\:text-6xl {
+    font-size: 2.5rem;
+  }
+
+  .text-4xl,
+  .lg\\:text-5xl {
+    font-size: 2rem;
+  }
+
+  .text-3xl {
+    font-size: 1.75rem;
+  }
+
+  .grid.lg\\:grid-cols-2 {
+    grid-template-columns: 1fr;
+  }
+
+  /* Ensure sidebar is hidden on mobile */
+  .fixed.left-0 {
+    transform: translateX(-100%);
+  }
+
+  .app-shell--mobile-open .fixed.left-0 {
+    transform: translateX(0);
+  }
+
+  /* Mobile header adjustments */
+  .app-shell__mobile-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: white;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .app-shell__mobile-toggle {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.5rem;
   }
 }
 

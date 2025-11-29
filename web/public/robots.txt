@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /_next/
+Disallow: /dashboard
+Disallow: /account
+Disallow: /subscription
+Disallow: /settings
+
+Sitemap: https://careerpilotconsulting.com/sitemap.xml
+
