@@ -282,6 +282,32 @@ export default function Dashboard({ user }) {
                 <p>Watch our demo video to learn best practices and unlock the full potential of CareerPilot.</p>
               </div>
             </div>
+            
+            <div className="video-thumbnail-container">
+              <a 
+                href="https://www.youtube.com/watch?v=YQaJvmKAPao" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="video-thumbnail-link"
+              >
+                <div className="video-thumbnail-wrapper">
+                  <img 
+                    src="https://img.youtube.com/vi/YQaJvmKAPao/maxresdefault.jpg" 
+                    alt="CareerPilot Demo Video"
+                    className="video-thumbnail"
+                    loading="lazy"
+                  />
+                  <div className="video-play-overlay">
+                    <div className="video-play-button">
+                      <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M8 5v14l11-7z"/>
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </a>
+            </div>
+            
             <div className="panel-card__actions">
               <a 
                 href="https://www.youtube.com/watch?v=YQaJvmKAPao" 
