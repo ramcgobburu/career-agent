@@ -284,7 +284,7 @@ export default function Dashboard({ user }) {
             </div>
             <div className="panel-card__actions">
               <a 
-                href="https://www.youtube.com/watch?v=YOUR_VIDEO_ID" 
+                href="https://www.youtube.com/watch?v=YQaJvmKAPao" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="cta"
