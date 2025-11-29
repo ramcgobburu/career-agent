@@ -12,6 +12,16 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        *:focus {
+            outline: none;
+        }
+        
+        button, a {
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
         }
         
         body {
@@ -221,7 +231,15 @@
             padding: 8px;
             border-radius: 16px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        
+        .tab-buttons::-webkit-scrollbar {
+            display: none;
         }
         
         .tab-button {
@@ -275,10 +293,18 @@
             padding: 14px 16px;
             border: 2px solid #e2e8f0;
             border-radius: 12px;
-            font-size: 15px;
+            font-size: 16px; /* Prevents zoom on iOS */
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             background: white;
             color: #1e293b;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        
+        input[type="file"] {
+            padding: 12px;
+            font-size: 14px;
+            cursor: pointer;
         }
         
         input:focus, textarea:focus, select:focus {
@@ -311,6 +337,10 @@
             cursor: pointer;
             transition: all 0.3s;
             font-weight: 500;
+            min-height: 44px; /* Better touch target for mobile */
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            user-select: none;
         }
         
         .btn-primary {
@@ -496,6 +526,9 @@
             z-index: 1000;
             align-items: center;
             justify-content: center;
+            padding: 10px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
         
         .modal.active {
@@ -512,6 +545,8 @@
             overflow-y: auto;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             animation: modalSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            -webkit-overflow-scrolling: touch;
+            margin: auto;
         }
         
         @keyframes modalSlideIn {
@@ -622,7 +657,7 @@
         /* Responsive Design */
         @media (max-width: 768px) {
             body {
-                padding: 10px;
+                padding: 8px;
             }
             
             .container {
@@ -630,60 +665,308 @@
             }
             
             .header {
-                padding: 30px 20px;
+                padding: 24px 16px;
             }
             
             .header h1 {
-                font-size: 2em;
-            }
-            
-            .user-info {
-                position: static;
-                text-align: center;
-                margin-top: 20px;
-            }
-            
-            .user-info button {
-                margin: 5px;
-                display: inline-block;
-            }
-            
-            .content {
-                padding: 24px;
-            }
-            
-            .tab-buttons {
-                overflow-x: auto;
-                -webkit-overflow-scrolling: touch;
-            }
-            
-            .tab-button {
-                padding: 12px 18px;
-                font-size: 14px;
-                white-space: nowrap;
-            }
-            
-            .modal-content {
-                padding: 24px;
-                width: 95%;
-            }
-        }
-        
-        @media (max-width: 480px) {
-            .header h1 {
-                font-size: 1.8em;
+                font-size: 1.75em;
+                margin-bottom: 6px;
             }
             
             .header p {
                 font-size: 0.95em;
             }
             
+            .header-company {
+                font-size: 0.75em;
+            }
+            
+            .user-info {
+                position: static;
+                text-align: center;
+                margin-top: 16px;
+                width: 100%;
+            }
+            
+            .user-info button {
+                margin: 4px;
+                display: inline-block;
+                padding: 8px 16px;
+                font-size: 13px;
+                width: auto;
+            }
+            
+            .usage-display {
+                padding: 10px 14px;
+                font-size: 12px;
+                margin-top: 8px;
+            }
+            
+            .content {
+                padding: 20px 16px;
+            }
+            
+            .tab-buttons {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                padding: 6px;
+                margin-bottom: 24px;
+                gap: 6px;
+            }
+            
+            .tab-button {
+                padding: 10px 16px;
+                font-size: 13px;
+                white-space: nowrap;
+                min-width: fit-content;
+            }
+            
+            .form-group {
+                margin-bottom: 18px;
+            }
+            
+            label {
+                font-size: 13px;
+                margin-bottom: 8px;
+            }
+            
+            input, textarea, select {
+                padding: 12px 14px;
+                font-size: 16px; /* Prevents zoom on iOS */
+                border-radius: 10px;
+            }
+            
+            textarea {
+                min-height: 90px;
+            }
+            
             .button-group {
                 flex-direction: column;
+                gap: 8px;
+                margin-top: 16px;
             }
             
             .button-group button {
                 width: 100%;
+                padding: 14px 20px;
+                font-size: 15px;
+                min-height: 44px; /* Better touch target */
+            }
+            
+            .result-area {
+                margin-top: 24px;
+                padding: 20px 16px;
+                border-radius: 12px;
+            }
+            
+            .result-area h3 {
+                font-size: 1.15em;
+                margin-bottom: 12px;
+            }
+            
+            .result-content {
+                padding: 16px;
+                font-size: 14px;
+                line-height: 1.7;
+            }
+            
+            .result-area button {
+                width: 100%;
+                margin-top: 0;
+                padding: 12px;
+                font-size: 14px;
+            }
+            
+            .result-area > div:last-child {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+            
+            .context-upload {
+                padding: 20px 16px;
+                margin-bottom: 20px;
+            }
+            
+            .context-upload h3 {
+                font-size: 1.1em;
+                margin-bottom: 10px;
+            }
+            
+            .auth-section {
+                padding: 30px 16px;
+            }
+            
+            .auth-section h2 {
+                font-size: 1.75em;
+                margin-bottom: 12px;
+            }
+            
+            .modal-content {
+                padding: 20px 16px;
+                width: 95%;
+                max-width: 95%;
+                margin: 10px;
+                border-radius: 16px;
+            }
+            
+            .modal-header {
+                font-size: 1.4em;
+                margin-bottom: 18px;
+            }
+            
+            .subscription-card {
+                padding: 18px;
+                margin: 16px 0;
+            }
+            
+            .subscription-card h3 {
+                font-size: 1.15em;
+            }
+            
+            .api-key-display {
+                padding: 12px;
+                font-size: 11px;
+                word-break: break-all;
+            }
+            
+            .footer {
+                padding: 20px 16px;
+                font-size: 12px;
+                margin-top: 30px;
+            }
+            
+            .loading {
+                padding: 16px;
+            }
+            
+            .loading p {
+                font-size: 14px;
+            }
+            
+            .spinner {
+                width: 40px;
+                height: 40px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            body {
+                padding: 6px;
+            }
+            
+            .header {
+                padding: 20px 12px;
+            }
+            
+            .header h1 {
+                font-size: 1.5em;
+                margin-bottom: 4px;
+            }
+            
+            .header p {
+                font-size: 0.85em;
+            }
+            
+            .header-company {
+                font-size: 0.7em;
+                margin-top: 6px;
+            }
+            
+            .user-info {
+                margin-top: 12px;
+            }
+            
+            .user-info button {
+                padding: 7px 12px;
+                font-size: 12px;
+                margin: 3px;
+            }
+            
+            .content {
+                padding: 16px 12px;
+            }
+            
+            .tab-buttons {
+                padding: 4px;
+                margin-bottom: 20px;
+            }
+            
+            .tab-button {
+                padding: 9px 14px;
+                font-size: 12px;
+            }
+            
+            .form-group {
+                margin-bottom: 16px;
+            }
+            
+            label {
+                font-size: 12px;
+                margin-bottom: 6px;
+            }
+            
+            input, textarea, select {
+                padding: 11px 12px;
+                font-size: 16px;
+            }
+            
+            .button-group {
+                gap: 6px;
+            }
+            
+            .button-group button {
+                padding: 13px 18px;
+                font-size: 14px;
+            }
+            
+            .result-area {
+                padding: 16px 12px;
+            }
+            
+            .result-content {
+                padding: 14px;
+                font-size: 13px;
+            }
+            
+            .context-upload {
+                padding: 16px 12px;
+            }
+            
+            .auth-section {
+                padding: 24px 12px;
+            }
+            
+            .auth-section h2 {
+                font-size: 1.5em;
+            }
+            
+            .modal-content {
+                padding: 18px 14px;
+                width: 98%;
+                max-width: 98%;
+                margin: 5px;
+            }
+            
+            .footer {
+                padding: 16px 12px;
+                font-size: 11px;
+            }
+        }
+        
+        @media (max-width: 360px) {
+            .header h1 {
+                font-size: 1.35em;
+            }
+            
+            .tab-button {
+                padding: 8px 12px;
+                font-size: 11px;
+            }
+            
+            .button-group button {
+                padding: 12px 16px;
+                font-size: 13px;
             }
         }
     </style>
@@ -914,7 +1197,7 @@
                 <div class="result-area" id="result">
                     <h3>Generated Content:</h3>
                     <div class="result-content" id="result-content"></div>
-                    <div style="margin-top: 15px;">
+                    <div style="margin-top: 15px; display: flex; flex-direction: column; gap: 10px;">
                         <button class="btn-secondary" onclick="copyToClipboard()">Copy to Clipboard</button>
                         <button class="btn-secondary" onclick="downloadResult()">Download as Text</button>
                     </div>
