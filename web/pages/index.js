@@ -160,6 +160,23 @@ export default function Home() {
     }
   };
 
+  const scrollToAuth = (viewType) => {
+    setView(viewType);
+    const authSection = document.getElementById('auth');
+    if (authSection) {
+      authSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  const handleSubscribe = () => {
+    if (!session) {
+      alert('Please create an account first to subscribe. You will be redirected to the sign up page.');
+      scrollToAuth(LOGIN_VIEW.SIGN_UP);
+    } else {
+      router.push('/subscription');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white">
       <Head>
@@ -185,9 +202,9 @@ export default function Home() {
               <a href="#features" className="text-gray-600 hover:text-gray-900 transition-colors">Features</a>
               <a href="#pricing" className="text-gray-600 hover:text-gray-900 transition-colors">Pricing</a>
               <a href="#how-it-works" className="text-gray-600 hover:text-gray-900 transition-colors">How it Works</a>
-              <button onClick={() => setView(LOGIN_VIEW.SIGN_IN)} className="text-gray-600 hover:text-gray-900 transition-colors">Login</button>
+              <button onClick={() => scrollToAuth(LOGIN_VIEW.SIGN_IN)} className="text-gray-600 hover:text-gray-900 transition-colors">Login</button>
               <button 
-                onClick={() => setView(LOGIN_VIEW.SIGN_UP)} 
+                onClick={() => scrollToAuth(LOGIN_VIEW.SIGN_UP)} 
                 className="bg-gradient-to-r from-teal-500 to-emerald-600 text-white px-6 py-2 rounded-lg hover:shadow-lg transition-all"
               >
                 Get Started Free
@@ -202,11 +219,11 @@ export default function Home() {
           {mobileMenuOpen && (
             <div className="md:hidden py-4 border-t">
               <div className="flex flex-col gap-4">
-                <a href="#features" className="text-gray-600">Features</a>
-                <a href="#pricing" className="text-gray-600">Pricing</a>
-                <button onClick={() => { setView(LOGIN_VIEW.SIGN_IN); setMobileMenuOpen(false); }} className="text-gray-600 text-left">Login</button>
+                <a href="#features" className="text-gray-600" onClick={() => setMobileMenuOpen(false)}>Features</a>
+                <a href="#pricing" className="text-gray-600" onClick={() => setMobileMenuOpen(false)}>Pricing</a>
+                <button onClick={() => { scrollToAuth(LOGIN_VIEW.SIGN_IN); setMobileMenuOpen(false); }} className="text-gray-600 text-left">Login</button>
                 <button 
-                  onClick={() => { setView(LOGIN_VIEW.SIGN_UP); setMobileMenuOpen(false); }} 
+                  onClick={() => { scrollToAuth(LOGIN_VIEW.SIGN_UP); setMobileMenuOpen(false); }} 
                   className="bg-gradient-to-r from-teal-500 to-emerald-600 text-white px-6 py-2 rounded-lg text-left"
                 >
                   Get Started Free
@@ -253,7 +270,7 @@ export default function Home() {
 
               <div className="flex flex-col sm:flex-row gap-4">
                 <button 
-                  onClick={() => setView(LOGIN_VIEW.SIGN_UP)} 
+                  onClick={() => scrollToAuth(LOGIN_VIEW.SIGN_UP)} 
                   className="bg-gradient-to-r from-teal-500 to-emerald-600 text-white px-8 py-4 rounded-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 group"
                 >
                   Start Free Trial
@@ -394,7 +411,7 @@ export default function Home() {
               <div className="text-4xl text-gray-900 mb-1">$0</div>
               <div className="text-sm text-gray-500 mb-6">Get started for free</div>
               <button 
-                onClick={() => setView(LOGIN_VIEW.SIGN_UP)} 
+                onClick={() => scrollToAuth(LOGIN_VIEW.SIGN_UP)} 
                 className="w-full bg-gray-900 text-white py-3 rounded-lg hover:bg-gray-800 transition-all mb-6"
               >
                 Start Free
@@ -421,7 +438,7 @@ export default function Home() {
               <div className="text-4xl text-white mb-1">$9.99</div>
               <div className="text-sm text-teal-100 mb-6">per week</div>
               <button 
-                onClick={() => setView(LOGIN_VIEW.SIGN_UP)} 
+                onClick={handleSubscribe}
                 className="w-full bg-white text-teal-600 py-3 rounded-lg hover:bg-teal-50 transition-all mb-6 font-medium"
               >
                 Subscribe
@@ -448,7 +465,7 @@ export default function Home() {
               <div className="text-4xl text-gray-900 mb-1">$27.99</div>
               <div className="text-sm text-gray-500 mb-6">per month</div>
               <button 
-                onClick={() => setView(LOGIN_VIEW.SIGN_UP)} 
+                onClick={handleSubscribe}
                 className="w-full bg-teal-600 text-white py-3 rounded-lg hover:bg-teal-700 transition-all mb-6 font-medium"
               >
                 Subscribe
@@ -693,7 +710,7 @@ export default function Home() {
             Join thousands of professionals who are already using AI to advance their careers
           </p>
           <button 
-            onClick={() => setView(LOGIN_VIEW.SIGN_UP)} 
+            onClick={() => scrollToAuth(LOGIN_VIEW.SIGN_UP)} 
             className="bg-white text-teal-600 px-8 py-4 rounded-lg hover:shadow-xl transition-all inline-flex items-center gap-2 group font-medium"
           >
             Get Started Free
@@ -732,8 +749,14 @@ export default function Home() {
               </ul>
             </div>
             <div>
-              <h4 className="text-white mb-4 font-semibold">Legal</h4>
+              <h4 className="text-white mb-4 font-semibold">Contact & Legal</h4>
               <ul className="space-y-2 text-sm">
+                <li>
+                  <a href="mailto:careerpilotconsulting@gmail.com" className="hover:text-white transition-colors flex items-center gap-2">
+                    <span>Contact Us</span>
+                  </a>
+                </li>
+                <li className="text-gray-500 text-xs mt-1">careerpilotconsulting@gmail.com</li>
                 <li><a href="/privacy_policy.html" target="_blank" className="hover:text-white transition-colors">Privacy</a></li>
                 <li><a href="#" className="hover:text-white transition-colors">Terms</a></li>
                 <li><a href="#" className="hover:text-white transition-colors">Security</a></li>
