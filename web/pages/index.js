@@ -770,23 +770,34 @@ export default function Home() {
 }
 
 export const getServerSideProps = async (ctx) => {
-  const supabase = createServerSupabaseClient(ctx);
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  try {
+    const supabase = createServerSupabaseClient(ctx);
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
 
-  if (session) {
+    if (session) {
+      return {
+        redirect: {
+          destination: '/dashboard',
+          permanent: false,
+        },
+      };
+    }
+
     return {
-      redirect: {
-        destination: '/dashboard',
-        permanent: false,
+      props: {
+        initialSession: null,
+      },
+    };
+  } catch (error) {
+    // If there's an error (e.g., missing env vars), still render the page
+    // The client-side will handle authentication
+    console.error('Error in getServerSideProps:', error);
+    return {
+      props: {
+        initialSession: null,
       },
     };
   }
-
-  return {
-    props: {
-      initialSession: null,
-    },
-  };
 };

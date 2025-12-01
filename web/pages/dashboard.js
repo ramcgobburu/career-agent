@@ -401,12 +401,30 @@ export default function Dashboard({ user }) {
 }
 
 export const getServerSideProps = async (ctx) => {
-  const supabase = createServerSupabaseClient(ctx);
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  try {
+    const supabase = createServerSupabaseClient(ctx);
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
 
-  if (!session) {
+    if (!session) {
+      return {
+        redirect: {
+          destination: '/',
+          permanent: false,
+        },
+      };
+    }
+
+    return {
+      props: {
+        initialSession: session,
+        user: session.user,
+      },
+    };
+  } catch (error) {
+    console.error('Error in dashboard getServerSideProps:', error);
+    // Redirect to home if there's an error
     return {
       redirect: {
         destination: '/',
@@ -414,11 +432,4 @@ export const getServerSideProps = async (ctx) => {
       },
     };
   }
-
-  return {
-    props: {
-      initialSession: session,
-      user: session.user,
-    },
-  };
 };
