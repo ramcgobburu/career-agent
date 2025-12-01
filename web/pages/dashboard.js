@@ -128,14 +128,23 @@ export default function Dashboard({ user }) {
       setIsSigningOut(true);
       setProfile(null);
       setProfileError(null);
+      
+      // Sign out from Supabase
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.error('Sign out error:', error);
       }
-      router.push('/');
+      
+      // Wait a moment to ensure session is cleared
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      // Force a full page reload with signout parameter to clear server-side session
+      // Use window.location instead of router.push to bypass Next.js routing cache
+      window.location.href = '/?signout=true';
     } catch (err) {
       console.error('Error during sign out:', err);
-      router.push('/');
+      // Even on error, try to redirect
+      window.location.href = '/';
     }
   };
 

@@ -42,11 +42,22 @@ export default function AppShell({ children }) {
 
   const handleSignOut = async () => {
     try {
-      await supabase.auth.signOut();
-      router.push('/');
+      // Sign out from Supabase
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Sign out error:', error);
+      }
+      
+      // Wait a moment to ensure session is cleared
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      // Force a full page reload with signout parameter to clear server-side session
+      // Use window.location instead of router.push to bypass Next.js routing cache
+      window.location.href = '/?signout=true';
     } catch (err) {
       console.error('Error during sign out:', err);
-      router.push('/');
+      // Even on error, try to redirect
+      window.location.href = '/';
     }
   };
 
@@ -55,12 +66,9 @@ export default function AppShell({ children }) {
       <aside className="fixed left-0 top-0 bottom-0 w-64 bg-white border-r border-gray-200 flex flex-col z-20">
         {/* Logo */}
         <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center gap-2">
-            <div className="bg-gradient-to-br from-teal-500 to-emerald-600 p-2 rounded-lg">
-              <Compass className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-lg text-gray-900 font-semibold">CareerPilot</span>
-          </div>
+          <Link href="/dashboard" className="flex items-center">
+            <img src="/logo.svg" alt="CareerPilot" className="h-8" />
+          </Link>
         </div>
 
         {/* Main Navigation */}

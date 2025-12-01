@@ -1,4 +1,5 @@
 import Head from 'next/head';
+import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useSupabaseClient, useSession } from '@supabase/auth-helpers-react';
@@ -191,12 +192,9 @@ export default function Home() {
       <header className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-sm z-50 border-b border-gray-100">
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-2">
-              <div className="bg-gradient-to-br from-teal-500 to-emerald-600 p-2 rounded-lg">
-                <Sparkles className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xl text-gray-900 font-semibold">CareerPilot</span>
-            </div>
+            <Link href="/" className="flex items-center">
+              <img src="/logo.svg" alt="CareerPilot" className="h-8" />
+            </Link>
 
             <div className="hidden md:flex items-center gap-8">
               <a href="#features" className="text-gray-600 hover:text-gray-900 transition-colors">Features</a>
@@ -775,6 +773,19 @@ export default function Home() {
 export const getServerSideProps = async (ctx) => {
   try {
     const supabase = createServerSupabaseClient(ctx);
+    
+    // Check for sign out query parameter
+    const signOut = ctx.query.signout === 'true';
+    if (signOut) {
+      // If explicitly signing out, clear session and don't redirect
+      await supabase.auth.signOut();
+      return {
+        props: {
+          initialSession: null,
+        },
+      };
+    }
+    
     const {
       data: { session },
     } = await supabase.auth.getSession();
