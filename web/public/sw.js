@@ -1,37 +1,24 @@
-const CACHE_NAME = 'careerpilot-v1';
-const urlsToCache = [
-  '/',
-  '/dashboard',
-  '/generator',
-  '/styles/globals.css',
-  '/_next/static/css/',
-];
+// Use timestamp-based version for cache busting
+const CACHE_VERSION = Date.now();
+const CACHE_NAME = `careerpilot-v${CACHE_VERSION}`;
+const STATIC_CACHE_NAME = 'careerpilot-static-v1';
 
-// Install event - cache resources
+// Install event - cache static resources only
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('Service Worker: Cache opened');
-        return cache.addAll(urlsToCache);
-      })
-      .catch((error) => {
-        console.error('Service Worker: Cache failed', error);
-      })
-  );
+  console.log('Service Worker: Installing...');
   self.skipWaiting();
 });
 
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
+  console.log('Service Worker: Activating...');
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            console.log('Service Worker: Deleting old cache', cacheName);
-            return caches.delete(cacheName);
-          }
+          // Delete all old caches
+          console.log('Service Worker: Deleting cache', cacheName);
+          return caches.delete(cacheName);
         })
       );
     })
@@ -39,43 +26,77 @@ self.addEventListener('activate', (event) => {
   return self.clients.claim();
 });
 
-// Fetch event - serve from cache, fallback to network
+// Fetch event - Network first strategy for HTML/JS, cache for static assets
 self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  const url = new URL(request.url);
+
   // Skip non-GET requests
-  if (event.request.method !== 'GET') {
+  if (request.method !== 'GET') {
     return;
   }
 
-  // Skip API requests
-  if (event.request.url.includes('/api/')) {
+  // Skip API requests - always use network
+  if (url.pathname.startsWith('/api/')) {
     return;
   }
 
-  event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        // Return cached version or fetch from network
-        return response || fetch(event.request).then((response) => {
-          // Don't cache if not a valid response
-          if (!response || response.status !== 200 || response.type !== 'basic') {
-            return response;
-          }
+  // Skip service worker itself
+  if (url.pathname === '/sw.js') {
+    return;
+  }
 
-          // Clone the response
-          const responseToCache = response.clone();
-
-          caches.open(CACHE_NAME)
-            .then((cache) => {
-              cache.put(event.request, responseToCache);
-            });
-
+  // Network-first strategy for HTML pages and JS
+  if (request.headers.get('accept')?.includes('text/html') || 
+      url.pathname.endsWith('.js') || 
+      url.pathname.startsWith('/_next/')) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          // Don't cache HTML or JS - always fetch fresh
           return response;
-        });
-      })
-      .catch(() => {
-        // Return offline page if available
-        return caches.match('/');
-      })
-  );
+        })
+        .catch(() => {
+          // Fallback to cache only if network fails
+          return caches.match(request).then((cachedResponse) => {
+            if (cachedResponse) {
+              return cachedResponse;
+            }
+            // Return offline page if available
+            return caches.match('/');
+          });
+        })
+    );
+    return;
+  }
+
+  // Cache-first strategy for static assets (images, fonts, etc.)
+  if (url.pathname.match(/\.(jpg|jpeg|png|gif|svg|ico|webp|woff|woff2|ttf|eot)$/)) {
+    event.respondWith(
+      caches.match(request)
+        .then((cachedResponse) => {
+          if (cachedResponse) {
+            return cachedResponse;
+          }
+          return fetch(request).then((response) => {
+            // Cache static assets
+            if (response && response.status === 200) {
+              const responseToCache = response.clone();
+              caches.open(STATIC_CACHE_NAME).then((cache) => {
+                cache.put(request, responseToCache);
+              });
+            }
+            return response;
+          });
+        })
+        .catch(() => {
+          return new Response('Offline', { status: 503 });
+        })
+    );
+    return;
+  }
+
+  // For everything else, use network only
+  event.respondWith(fetch(request));
 });
 
