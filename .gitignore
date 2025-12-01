@@ -77,3 +77,4 @@ web/.env.*
 # Secrets
 credentials/
 secrets/
+STRIPE_CREDENTIALS.txt
