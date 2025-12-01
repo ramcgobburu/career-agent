@@ -15,12 +15,11 @@ export default function Document() {
         <meta name="msapplication-tap-highlight" content="no" />
         <meta name="theme-color" content="#0ea5e9" />
         
-        <link rel="apple-touch-icon" href="/icon.svg" />
-        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <link rel="apple-touch-icon" href="/icon-192.png" />
         <link rel="icon" type="image/png" sizes="32x32" href="/icon-192.png" />
         <link rel="icon" type="image/png" sizes="16x16" href="/icon-192.png" />
         <link rel="manifest" href="/manifest.json" />
-        <link rel="shortcut icon" href="/favicon.svg" />
+        <link rel="shortcut icon" href="/icon-192.png" />
         
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
