@@ -84,3 +84,5 @@ async def test_cover_letter_autofill_and_generate():
         finally:
             await browser.close()
 
+
+

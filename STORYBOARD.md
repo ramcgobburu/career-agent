@@ -369,3 +369,5 @@
 
 7. **Multiple takes**: Don't be afraid to re-record sections that don't look good.
 
+
+

@@ -49,3 +49,5 @@ Experienced product manager and engineer with 10+ years of experience building s
 **Action**: Conducted user interviews, analyzed usage data, and implemented personalized dashboard features
 **Result**: Increased daily active users by 40% and improved user retention by 25%
 
+
+

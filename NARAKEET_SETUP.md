@@ -95,3 +95,5 @@ If automation doesn't work, you can:
 3. Place them in `narakeet_assets/screenshots/`
 4. Run only the PowerPoint creation part (modify script)
 
+
+

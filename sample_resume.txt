@@ -39,3 +39,5 @@ CERTIFICATIONS
 • Certified Scrum Product Owner (CSPO)
 • AWS Certified Solutions Architect
 
+
+

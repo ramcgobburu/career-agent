@@ -5,11 +5,12 @@ import { useSupabaseClient, useSession } from '@supabase/auth-helpers-react';
 import AppShell from '../components/AppShell';
 import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs';
 
-// Stripe Price IDs - Replace these with your actual Stripe Price IDs
+// Stripe Price IDs - Set these via environment variables
 // Get these from Stripe Dashboard > Products > Your Product > Pricing
+// Set NEXT_PUBLIC_STRIPE_WEEKLY_PRICE_ID and NEXT_PUBLIC_STRIPE_MONTHLY_PRICE_ID in your environment
 const STRIPE_PRICE_IDS = {
-  weekly: process.env.NEXT_PUBLIC_STRIPE_WEEKLY_PRICE_ID || 'price_1SU9guD3YrV0maBoMLJYRZmm',
-  monthly: process.env.NEXT_PUBLIC_STRIPE_MONTHLY_PRICE_ID || 'price_1SU9hUD3YrV0maBoYT3fpGdQ',
+  weekly: process.env.NEXT_PUBLIC_STRIPE_WEEKLY_PRICE_ID,
+  monthly: process.env.NEXT_PUBLIC_STRIPE_MONTHLY_PRICE_ID,
 };
 
 const plans = [
