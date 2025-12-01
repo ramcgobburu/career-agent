@@ -9,8 +9,8 @@ import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs';
 // Get these from Stripe Dashboard > Products > Your Product > Pricing
 // Set NEXT_PUBLIC_STRIPE_WEEKLY_PRICE_ID and NEXT_PUBLIC_STRIPE_MONTHLY_PRICE_ID in your environment
 const STRIPE_PRICE_IDS = {
-  weekly: process.env.NEXT_PUBLIC_STRIPE_WEEKLY_PRICE_ID,
-  monthly: process.env.NEXT_PUBLIC_STRIPE_MONTHLY_PRICE_ID,
+  weekly: process.env.NEXT_PUBLIC_STRIPE_WEEKLY_PRICE_ID || 'price_1SZeGKLnMLXIe10aVo6f938A',
+  monthly: process.env.NEXT_PUBLIC_STRIPE_MONTHLY_PRICE_ID || 'price_1SZeDILnMLXIe10adeEmQKJa',
 };
 
 const plans = [
