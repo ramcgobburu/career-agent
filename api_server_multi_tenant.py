@@ -292,6 +292,12 @@ class UpdateUserRequest(BaseModel):
     name: Optional[str] = Field(None, description="User's full name")
     email: Optional[str] = Field(None, description="User's email address")
 
+class DashboardStatsResponse(BaseModel):
+    active_contexts: int = Field(0, description="Number of active/saved contexts")
+    generated_documents: int = Field(0, description="Number of generated documents")
+    job_applications: int = Field(0, description="Number of job applications")
+    recent_activity: List[Dict[str, Any]] = Field(default_factory=list, description="Recent activity records")
+
 
 def format_response(content: str, sources: Any, format_type: str = "text") -> str:
     """Format the response according to requested format."""
@@ -1144,6 +1150,88 @@ async def get_subscription_status(
 
 
 # Account Management Endpoints
+@app.get("/api/v1/dashboard-stats", response_model=DashboardStatsResponse)
+async def get_dashboard_stats(
+    user: User = Depends(get_current_user_from_header),
+    db: Session = Depends(get_db)
+):
+    """Get dashboard statistics for the current user."""
+    from database import (
+        list_user_contexts,
+        list_generated_documents,
+        get_recent_usage_records
+    )
+    
+    # Get active contexts count
+    contexts = list_user_contexts(db, user.id, limit=1000)
+    active_contexts = len([c for c in contexts if c.is_active])
+    
+    # Get generated documents count
+    documents = list_generated_documents(db, user.id, limit=1000)
+    generated_documents = len(documents)
+    
+    # Count resumes (documents with type containing 'resume')
+    resumes = [d for d in documents if 'resume' in d.document_type.lower()]
+    active_resumes = len(resumes)
+    
+    # For now, job applications = generated documents with type 'job-application' or similar
+    job_applications = len([d for d in documents if 'application' in d.document_type.lower() or 'cover-letter' in d.document_type.lower()])
+    
+    # Get recent activity (last 10 usage records)
+    recent_records = get_recent_usage_records(db, user.id, limit=10)
+    recent_activity = []
+    
+    for record in recent_records:
+        # Map endpoint to friendly action name
+        action_map = {
+            'cover-letter': 'Generated cover letter',
+            'blurb': 'Generated blurb',
+            'role-summary': 'Generated role summary',
+            'star-story': 'Generated STAR story',
+            'interview-answer': 'Generated interview answer',
+            'query': 'Ran query',
+            'upload-context': 'Uploaded context'
+        }
+        action = action_map.get(record.endpoint, f'Used {record.endpoint}')
+        
+        # Calculate time ago
+        time_ago = get_time_ago(record.created_at)
+        
+        recent_activity.append({
+            'action': action,
+            'endpoint': record.endpoint,
+            'time_ago': time_ago,
+            'created_at': record.created_at.isoformat() if record.created_at else None
+        })
+    
+    return DashboardStatsResponse(
+        active_contexts=len(contexts),  # Total saved contexts
+        generated_documents=generated_documents,
+        job_applications=job_applications,
+        recent_activity=recent_activity
+    )
+
+
+def get_time_ago(dt: datetime) -> str:
+    """Convert datetime to human-readable time ago string."""
+    if not dt:
+        return 'Unknown'
+    
+    now = datetime.utcnow()
+    diff = now - dt
+    
+    if diff.days > 0:
+        return f'{diff.days} day{"s" if diff.days > 1 else ""} ago'
+    elif diff.seconds >= 3600:
+        hours = diff.seconds // 3600
+        return f'{hours} hour{"s" if hours > 1 else ""} ago'
+    elif diff.seconds >= 60:
+        minutes = diff.seconds // 60
+        return f'{minutes} minute{"s" if minutes > 1 else ""} ago'
+    else:
+        return 'Just now'
+
+
 @app.get("/api/v1/me", response_model=UserProfileResponse)
 async def get_user_profile(
     user: User = Depends(get_current_user_from_header),

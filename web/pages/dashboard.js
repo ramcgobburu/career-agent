@@ -17,6 +17,8 @@ export default function Dashboard({ user }) {
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [profileError, setProfileError] = useState(null);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [dashboardStats, setDashboardStats] = useState(null);
+  const [loadingStats, setLoadingStats] = useState(true);
 
   const apiBaseUrl = useMemo(() => {
     if (process.env.NEXT_PUBLIC_API_BASE_URL) {
@@ -79,12 +81,47 @@ export default function Dashboard({ user }) {
     }
   }, [apiBaseUrl, accessToken, authHeaders, isSigningOut]);
 
+  const fetchDashboardStats = useCallback(async () => {
+    if (!apiBaseUrl || !accessToken || isSigningOut) {
+      return;
+    }
+    setLoadingStats(true);
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/v1/dashboard-stats`, {
+        headers: authHeaders,
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          setLoadingStats(false);
+          return;
+        }
+        throw new Error('Failed to load dashboard stats');
+      }
+
+      const data = await response.json();
+      if (!isSigningOut) {
+        setDashboardStats(data);
+      }
+    } catch (err) {
+      if (!isSigningOut && !err.message.includes('401') && !err.message.includes('Unauthorized')) {
+        console.error('Error fetching dashboard stats:', err);
+      }
+    } finally {
+      if (!isSigningOut) {
+        setLoadingStats(false);
+      }
+    }
+  }, [apiBaseUrl, accessToken, authHeaders, isSigningOut]);
+
   useEffect(() => {
     if (!session || !accessToken || !apiBaseUrl || isSigningOut) {
       return;
     }
     fetchProfile();
-  }, [session, accessToken, apiBaseUrl, isSigningOut, fetchProfile]);
+    fetchDashboardStats();
+  }, [session, accessToken, apiBaseUrl, isSigningOut, fetchProfile, fetchDashboardStats]);
 
   const handleSignOut = async () => {
     try {
@@ -155,8 +192,10 @@ export default function Dashboard({ user }) {
               </div>
               <TrendingUp className="w-5 h-5 text-green-600" />
             </div>
-            <div className="text-2xl text-gray-900 mb-1">3</div>
-            <div className="text-sm text-gray-600">Active Resumes</div>
+            <div className="text-2xl text-gray-900 mb-1">
+              {loadingStats ? '...' : (dashboardStats?.generated_documents || 0)}
+            </div>
+            <div className="text-sm text-gray-600">Generated Documents</div>
           </div>
 
           <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
@@ -166,7 +205,9 @@ export default function Dashboard({ user }) {
               </div>
               <TrendingUp className="w-5 h-5 text-green-600" />
             </div>
-            <div className="text-2xl text-gray-900 mb-1">12</div>
+            <div className="text-2xl text-gray-900 mb-1">
+              {loadingStats ? '...' : (dashboardStats?.active_contexts || 0)}
+            </div>
             <div className="text-sm text-gray-600">Saved Contents</div>
           </div>
 
@@ -177,7 +218,9 @@ export default function Dashboard({ user }) {
               </div>
               <Clock className="w-5 h-5 text-yellow-600" />
             </div>
-            <div className="text-2xl text-gray-900 mb-1">8</div>
+            <div className="text-2xl text-gray-900 mb-1">
+              {loadingStats ? '...' : (dashboardStats?.job_applications || 0)}
+            </div>
             <div className="text-sm text-gray-600">Job Applications</div>
           </div>
 
@@ -263,50 +306,40 @@ export default function Dashboard({ user }) {
                 </Link>
               </div>
               <div className="space-y-4">
-                {[
-                  {
-                    action: 'Generated cover letter',
-                    item: 'Senior Product Manager at TechCorp',
-                    time: '2 hours ago',
-                    icon: Sparkles,
-                    color: 'bg-purple-100 text-purple-600'
-                  },
-                  {
-                    action: 'Updated resume',
-                    item: 'Product_Manager_Resume_2025.pdf',
-                    time: '5 hours ago',
-                    icon: FileText,
-                    color: 'bg-blue-100 text-blue-600'
-                  },
-                  {
-                    action: 'Applied to job',
-                    item: 'UX Designer at StartupXYZ',
-                    time: '1 day ago',
-                    icon: Briefcase,
-                    color: 'bg-orange-100 text-orange-600'
-                  },
-                  {
-                    action: 'Optimized LinkedIn',
-                    item: 'Profile headline updated',
-                    time: '2 days ago',
-                    icon: CheckCircle2,
-                    color: 'bg-green-100 text-green-600'
-                  }
-                ].map((activity, index) => {
-                  const IconComponent = activity.icon;
-                  return (
-                    <div key={index} className="flex items-start gap-4 pb-4 border-b border-gray-100 last:border-0 last:pb-0">
-                      <div className={`${activity.color} p-2 rounded-lg`}>
-                        <IconComponent className="w-5 h-5" />
+                {loadingStats ? (
+                  <div className="text-center py-8 text-gray-500">Loading activity...</div>
+                ) : dashboardStats?.recent_activity && dashboardStats.recent_activity.length > 0 ? (
+                  dashboardStats.recent_activity.map((activity, index) => {
+                    // Map endpoint to icon and color
+                    const iconMap = {
+                      'cover-letter': { icon: Sparkles, color: 'bg-purple-100 text-purple-600' },
+                      'blurb': { icon: Sparkles, color: 'bg-indigo-100 text-indigo-600' },
+                      'role-summary': { icon: FileText, color: 'bg-blue-100 text-blue-600' },
+                      'star-story': { icon: FileText, color: 'bg-blue-100 text-blue-600' },
+                      'interview-answer': { icon: FileText, color: 'bg-blue-100 text-blue-600' },
+                      'query': { icon: Sparkles, color: 'bg-teal-100 text-teal-600' },
+                      'upload-context': { icon: FolderOpen, color: 'bg-green-100 text-green-600' }
+                    };
+                    
+                    const activityConfig = iconMap[activity.endpoint] || { icon: CheckCircle2, color: 'bg-gray-100 text-gray-600' };
+                    const IconComponent = activityConfig.icon;
+                    
+                    return (
+                      <div key={index} className="flex items-start gap-4 pb-4 border-b border-gray-100 last:border-0 last:pb-0">
+                        <div className={`${activityConfig.color} p-2 rounded-lg`}>
+                          <IconComponent className="w-5 h-5" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="text-gray-900">{activity.action}</div>
+                          <div className="text-sm text-gray-600">{activity.endpoint}</div>
+                        </div>
+                        <div className="text-xs text-gray-500">{activity.time_ago}</div>
                       </div>
-                      <div className="flex-1">
-                        <div className="text-gray-900">{activity.action}</div>
-                        <div className="text-sm text-gray-600">{activity.item}</div>
-                      </div>
-                      <div className="text-xs text-gray-500">{activity.time}</div>
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                ) : (
+                  <div className="text-center py-8 text-gray-500">No recent activity</div>
+                )}
               </div>
             </div>
           </div>
