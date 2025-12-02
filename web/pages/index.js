@@ -758,9 +758,9 @@ export default function Home() {
                   </a>
                 </li>
                 <li className="text-gray-500 text-xs mt-1">careerpilotconsulting@gmail.com</li>
-                <li><a href="/privacy_policy.html" target="_blank" className="hover:text-white transition-colors">Privacy</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Terms</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Security</a></li>
+                <li><Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link></li>
+                <li><Link href="/terms" className="hover:text-white transition-colors">Terms</Link></li>
+                <li><Link href="/security" className="hover:text-white transition-colors">Security</Link></li>
               </ul>
             </div>
           </div>
