@@ -191,9 +191,9 @@ export default function Home() {
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-sm z-50 border-b border-gray-100">
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+          <div className="flex justify-between items-center h-20">
             <Link href="/" className="flex items-center">
-              <img src="/logo.svg" alt="CareerPilot" className="h-8" />
+              <img src="/logo.svg" alt="CareerPilot" className="h-12" />
             </Link>
 
             <div className="hidden md:flex items-center gap-8">
@@ -217,6 +217,9 @@ export default function Home() {
           {mobileMenuOpen && (
             <div className="md:hidden py-4 border-t">
               <div className="flex flex-col gap-4">
+                <Link href="/" className="flex items-center mb-2" onClick={() => setMobileMenuOpen(false)}>
+                  <img src="/logo.svg" alt="CareerPilot" className="h-10" />
+                </Link>
                 <a href="#features" className="text-gray-600" onClick={() => setMobileMenuOpen(false)}>Features</a>
                 <a href="#pricing" className="text-gray-600" onClick={() => setMobileMenuOpen(false)}>Pricing</a>
                 <button onClick={() => { scrollToAuth(LOGIN_VIEW.SIGN_IN); setMobileMenuOpen(false); }} className="text-gray-600 text-left">Login</button>

@@ -67,7 +67,7 @@ export default function AppShell({ children }) {
         {/* Logo */}
         <div className="p-6 border-b border-gray-200">
           <Link href="/dashboard" className="flex items-center">
-            <img src="/logo.svg" alt="CareerPilot" className="h-8" />
+            <img src="/logo.svg" alt="CareerPilot" className="h-12" />
           </Link>
         </div>
 
