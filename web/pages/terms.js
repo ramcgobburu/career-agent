@@ -1,6 +1,5 @@
 import Head from 'next/head';
 import Link from 'next/link';
-import AppShell from '../components/AppShell';
 
 export default function Terms() {
   return (
@@ -9,7 +8,15 @@ export default function Terms() {
         <title>Terms of Service | CareerPilot</title>
         <meta name="description" content="CareerPilot Terms of Service - Legal agreement for using our AI-powered career assistant platform." />
       </Head>
-      <AppShell>
+      <div className="min-h-screen bg-gray-50">
+        {/* Simple Header */}
+        <header className="bg-white border-b border-gray-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <Link href="/" className="flex items-center">
+              <img src="/logo.svg" alt="CareerPilot" className="h-10" />
+            </Link>
+          </div>
+        </header>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-8">Terms of Service</h1>
           <p className="text-sm text-gray-500 mb-8">Last updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
@@ -211,7 +218,7 @@ export default function Terms() {
             </Link>
           </div>
         </div>
-      </AppShell>
+      </div>
     </>
   );
 }

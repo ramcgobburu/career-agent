@@ -1,6 +1,5 @@
 import Head from 'next/head';
 import Link from 'next/link';
-import AppShell from '../components/AppShell';
 import { Shield, Lock, Eye, Server, Key, CheckCircle2 } from 'lucide-react';
 
 export default function Security() {
@@ -10,7 +9,15 @@ export default function Security() {
         <title>Security | CareerPilot</title>
         <meta name="description" content="CareerPilot Security - Learn about our security measures and data protection practices." />
       </Head>
-      <AppShell>
+      <div className="min-h-screen bg-gray-50">
+        {/* Simple Header */}
+        <header className="bg-white border-b border-gray-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <Link href="/" className="flex items-center">
+              <img src="/logo.svg" alt="CareerPilot" className="h-10" />
+            </Link>
+          </div>
+        </header>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="text-center mb-12">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-teal-100 rounded-full mb-6">
@@ -217,7 +224,7 @@ export default function Security() {
             </Link>
           </div>
         </div>
-      </AppShell>
+      </div>
     </>
   );
 }
