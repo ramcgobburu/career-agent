@@ -387,6 +387,124 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Reviews Section */}
+      <section className="py-20 bg-white px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <div className="inline-block bg-amber-100 text-amber-700 px-4 py-2 rounded-full mb-4">
+              Testimonials
+            </div>
+            <h2 className="text-4xl lg:text-5xl text-gray-900 mb-4">
+              Loved by{' '}
+              <span className="bg-gradient-to-r from-teal-500 to-emerald-600 bg-clip-text text-transparent">
+                professionals worldwide
+              </span>
+            </h2>
+            <p className="text-xl text-gray-600">
+              See what our users are saying about CareerPilot
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {/* Review 1 */}
+            <div className="bg-white rounded-xl p-8 shadow-lg border border-gray-100 hover:shadow-xl transition-all">
+              <div className="flex items-center gap-1 mb-4">
+                {[...Array(5)].map((_, i) => (
+                  <svg key={i} className="w-5 h-5 text-amber-400 fill-current" viewBox="0 0 20 20">
+                    <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                  </svg>
+                ))}
+              </div>
+              <p className="text-gray-700 mb-6 leading-relaxed">
+                "CareerPilot transformed my job search. The AI-generated cover letters are incredibly personalized and helped me land interviews at three top companies. The LinkedIn optimizer alone is worth the subscription!"
+              </p>
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-teal-400 to-emerald-500 rounded-full flex items-center justify-center text-white font-semibold text-lg">
+                  SM
+                </div>
+                <div>
+                  <div className="font-semibold text-gray-900">Sarah Mitchell</div>
+                  <div className="text-sm text-gray-600">Product Manager</div>
+                  <div className="text-xs text-gray-500">TechCorp Inc.</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Review 2 */}
+            <div className="bg-white rounded-xl p-8 shadow-lg border border-gray-100 hover:shadow-xl transition-all">
+              <div className="flex items-center gap-1 mb-4">
+                {[...Array(5)].map((_, i) => (
+                  <svg key={i} className="w-5 h-5 text-amber-400 fill-current" viewBox="0 0 20 20">
+                    <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                  </svg>
+                ))}
+              </div>
+              <p className="text-gray-700 mb-6 leading-relaxed">
+                "As someone switching careers, I needed help crafting my story. CareerPilot's resume builder and interview answer generator gave me the confidence to articulate my value. I got my dream job within 2 months!"
+              </p>
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full flex items-center justify-center text-white font-semibold text-lg">
+                  JC
+                </div>
+                <div>
+                  <div className="font-semibold text-gray-900">James Chen</div>
+                  <div className="text-sm text-gray-600">Data Scientist</div>
+                  <div className="text-xs text-gray-500">DataFlow Analytics</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Review 3 */}
+            <div className="bg-white rounded-xl p-8 shadow-lg border border-gray-100 hover:shadow-xl transition-all">
+              <div className="flex items-center gap-1 mb-4">
+                {[...Array(5)].map((_, i) => (
+                  <svg key={i} className="w-5 h-5 text-amber-400 fill-current" viewBox="0 0 20 20">
+                    <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                  </svg>
+                ))}
+              </div>
+              <p className="text-gray-700 mb-6 leading-relaxed">
+                "The ATS scoring feature is a game-changer. I was getting zero responses before, but after optimizing my resume with CareerPilot, I started receiving callbacks. The job tracker keeps me organized throughout the process."
+              </p>
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full flex items-center justify-center text-white font-semibold text-lg">
+                  ER
+                </div>
+                <div>
+                  <div className="font-semibold text-gray-900">Emily Rodriguez</div>
+                  <div className="text-sm text-gray-600">Marketing Director</div>
+                  <div className="text-xs text-gray-500">Creative Solutions</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Review 4 */}
+            <div className="bg-white rounded-xl p-8 shadow-lg border border-gray-100 hover:shadow-xl transition-all md:col-span-2 lg:col-span-1">
+              <div className="flex items-center gap-1 mb-4">
+                {[...Array(5)].map((_, i) => (
+                  <svg key={i} className="w-5 h-5 text-amber-400 fill-current" viewBox="0 0 20 20">
+                    <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                  </svg>
+                ))}
+              </div>
+              <p className="text-gray-700 mb-6 leading-relaxed">
+                "I've tried multiple career tools, but CareerPilot stands out. The AI understands context and creates truly personalized content. My LinkedIn profile views increased by 300% after optimization. Highly recommend!"
+              </p>
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-red-500 rounded-full flex items-center justify-center text-white font-semibold text-lg">
+                  DK
+                </div>
+                <div>
+                  <div className="font-semibold text-gray-900">David Kim</div>
+                  <div className="text-sm text-gray-600">Software Engineer</div>
+                  <div className="text-xs text-gray-500">CloudTech Systems</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Pricing Section */}
       <section id="pricing" className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
